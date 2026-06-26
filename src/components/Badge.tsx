@@ -12,7 +12,9 @@ export function Badge({
   const text = variant === "accent" ? "text-accent-text" : "text-calm-text";
 
   return (
-    <div className={`inline-flex items-center gap-2 rounded-md px-3 py-2 ${bg}`}>
+    <div
+      className={`inline-flex items-center gap-2 rounded-md px-3 py-2 ${bg}`}
+    >
       <span className={`h-[7px] w-[7px] rounded-full ${dot}`} />
       <span className={`font-body text-sm ${text}`}>{children}</span>
     </div>

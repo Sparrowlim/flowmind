@@ -46,7 +46,9 @@ export function Capture({
           type="button"
           onClick={() => setImportant((v) => !v)}
           className={`rounded-md px-3 py-2 font-body text-sm ${
-            important ? "bg-accent-soft text-accent-text" : "border border-border bg-surface text-ink-soft"
+            important
+              ? "bg-accent-soft text-accent-text"
+              : "border border-border bg-surface text-ink-soft"
           }`}
         >
           ＋ 중요

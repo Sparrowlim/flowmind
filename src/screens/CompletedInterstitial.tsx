@@ -26,8 +26,12 @@ export function CompletedInterstitial({
       </p>
       {nextTask && (
         <Card className="mt-6 w-full text-left">
-          <div className="font-body text-[13px] font-bold tracking-wide text-accent-text">다음</div>
-          <div className="mt-1 font-display text-lg text-ink">{nextTask.title}</div>
+          <div className="font-body text-[13px] font-bold tracking-wide text-accent-text">
+            다음
+          </div>
+          <div className="mt-1 font-display text-lg text-ink">
+            {nextTask.title}
+          </div>
         </Card>
       )}
       <div className="mt-10 w-full">

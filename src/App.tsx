@@ -13,13 +13,26 @@ import { NowCard } from "./screens/NowCard";
 import { useEngineDecision } from "./hooks/useEngineDecision";
 import { useTasks } from "./hooks/useTasks";
 
-type View = { kind: "engine" } | { kind: "focus"; taskId: TaskId } | { kind: "completed" };
+type View =
+  | { kind: "engine" }
+  | { kind: "focus"; taskId: TaskId }
+  | { kind: "completed" };
 
 function App() {
-  const { tasks, loading, capture, startFocus, completeFocus, deferTask, refuseSplit } = useTasks();
+  const {
+    tasks,
+    loading,
+    capture,
+    startFocus,
+    completeFocus,
+    deferTask,
+    refuseSplit,
+  } = useTasks();
   const [view, setView] = useState<View>({ kind: "engine" });
   const [captureOpen, setCaptureOpen] = useState(false);
-  const [completedNext, setCompletedNext] = useState<Task | undefined>(undefined);
+  const [completedNext, setCompletedNext] = useState<Task | undefined>(
+    undefined,
+  );
 
   const [now] = useState(() => Date.now());
   const decision = useEngineDecision(tasks, now);
@@ -76,7 +89,10 @@ function App() {
         );
       case "empty-dormant":
         return (
-          <EmptyPlaceholder message="지금은 쉬어도 돼요." onCapture={() => setCaptureOpen(true)} />
+          <EmptyPlaceholder
+            message="지금은 쉬어도 돼요."
+            onCapture={() => setCaptureOpen(true)}
+          />
         );
     }
   }
@@ -87,7 +103,9 @@ function App() {
       {view.kind === "focus" &&
         (() => {
           const task = tasks.find((t) => t.id === view.taskId);
-          return task ? <Focus task={task} onComplete={handleComplete} /> : null;
+          return task ? (
+            <Focus task={task} onComplete={handleComplete} />
+          ) : null;
         })()}
       {view.kind === "completed" && (
         <CompletedInterstitial
@@ -101,7 +119,7 @@ function App() {
           type="button"
           onClick={() => setCaptureOpen(true)}
           aria-label="할 일 담기"
-          className="fixed bottom-8 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-accent font-display text-2xl text-white shadow-accent"
+          className="fixed right-6 bottom-8 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-accent font-display text-2xl text-white shadow-accent"
         >
           +
         </button>

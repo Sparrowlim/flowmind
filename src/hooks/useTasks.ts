@@ -12,10 +12,12 @@ export function useTasks() {
   const [tasks, setTasks] = useState<Task[] | undefined>(undefined);
 
   useEffect(() => {
-    const subscription = liveQuery(() => taskRepository.listActive()).subscribe({
-      next: setTasks,
-      error: console.error,
-    });
+    const subscription = liveQuery(() => taskRepository.listActive()).subscribe(
+      {
+        next: setTasks,
+        error: console.error,
+      },
+    );
     return () => subscription.unsubscribe();
   }, []);
 
@@ -32,7 +34,11 @@ export function useTasks() {
     const task = await taskRepository.get(id);
     if (!task) return;
     const now = Date.now();
-    await taskRepository.update(id, transitions.completeFocus(task, now, sessionElapsedSec), now);
+    await taskRepository.update(
+      id,
+      transitions.completeFocus(task, now, sessionElapsedSec),
+      now,
+    );
   };
 
   const deferTask = async (id: TaskId) => {
@@ -46,7 +52,11 @@ export function useTasks() {
     const task = await taskRepository.get(id);
     if (!task) return;
     const now = Date.now();
-    await taskRepository.update(id, transitions.refuseSplit(task, now, DEFAULT_CONFIG), now);
+    await taskRepository.update(
+      id,
+      transitions.refuseSplit(task, now, DEFAULT_CONFIG),
+      now,
+    );
   };
 
   return {

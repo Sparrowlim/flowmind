@@ -31,11 +31,17 @@ export function Focus({
 
   return (
     <div className="flex min-h-screen flex-col items-center px-8 pt-8">
-      <div className="font-body text-[15px] tracking-widest text-ink-faint">집중 중</div>
-      <h2 className="mt-3 text-center font-display text-xl leading-snug text-ink">{task.title}</h2>
+      <div className="font-body text-[15px] tracking-widest text-ink-faint">
+        집중 중
+      </div>
+      <h2 className="mt-3 text-center font-display text-xl leading-snug text-ink">
+        {task.title}
+      </h2>
       <div className="flex flex-1 items-center">
         <ProgressRing fraction={fraction}>
-          <div className="font-display text-5xl tracking-wide text-ink">{formatElapsed(totalSec)}</div>
+          <div className="font-display text-5xl tracking-wide text-ink">
+            {formatElapsed(totalSec)}
+          </div>
           <div className="mt-1 font-body text-sm text-ink-faint">경과 시간</div>
         </ProgressRing>
       </div>

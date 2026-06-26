@@ -6,7 +6,10 @@ import { Badge } from "../components/Badge";
 import { PrimaryButton, SecondaryButton } from "../components/Button";
 import { whyNowLabel } from "../lib/whyNow";
 
-type CardDecision = Extract<Decision, { kind: "card" | "new-greeting" | "auto-split" }>;
+type CardDecision = Extract<
+  Decision,
+  { kind: "card" | "new-greeting" | "auto-split" }
+>;
 
 export function NowCard({
   decision,
@@ -32,14 +35,26 @@ export function NowCard({
 
   return (
     <div className="flex min-h-screen flex-col px-7 pt-7">
-      <div className="font-body text-[15px] tracking-wide text-ink-faint">지금 할 일</div>
+      <div className="font-body text-[15px] tracking-wide text-ink-faint">
+        지금 할 일
+      </div>
       <div className="flex flex-1 flex-col justify-center gap-6">
-        <h1 className="font-display text-[34px] leading-snug text-ink">{task.title}</h1>
-        <Badge variant={isAutoSplit ? "calm" : "accent"}>왜 지금? · {label}</Badge>
+        <h1 className="font-display text-[34px] leading-snug text-ink">
+          {task.title}
+        </h1>
+        <Badge variant={isAutoSplit ? "calm" : "accent"}>
+          왜 지금? · {label}
+        </Badge>
       </div>
       <div className="flex flex-col gap-3 pb-10">
-        <PrimaryButton onClick={() => onStart(task.id)}>지금 시작</PrimaryButton>
-        <SecondaryButton onClick={() => (isAutoSplit ? onRefuseSplit(task.id) : onDefer(task.id))}>
+        <PrimaryButton onClick={() => onStart(task.id)}>
+          지금 시작
+        </PrimaryButton>
+        <SecondaryButton
+          onClick={() =>
+            isAutoSplit ? onRefuseSplit(task.id) : onDefer(task.id)
+          }
+        >
           이따 다시
         </SecondaryButton>
       </div>
