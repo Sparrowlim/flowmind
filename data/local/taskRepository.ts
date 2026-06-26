@@ -1,7 +1,7 @@
 // data/README.md — Task Repository. core 타입(Task)만 참조, UI 의존 0.
 
-import type { Task, TaskId } from '@core/engine/types';
-import { db, type StoredTask } from './db';
+import type { Task, TaskId } from "@core/engine/types";
+import { db, type StoredTask } from "./db";
 
 function toTask(stored: StoredTask): Task {
   const {
@@ -39,7 +39,9 @@ function toTask(stored: StoredTask): Task {
 }
 
 export async function listActive(): Promise<Task[]> {
-  const rows = await db.tasks.filter((t) => t.deletedAt === undefined).toArray();
+  const rows = await db.tasks
+    .filter((t) => t.deletedAt === undefined)
+    .toArray();
   return rows.map(toTask);
 }
 
@@ -65,7 +67,7 @@ export async function create(input: NewTaskInput, now: number): Promise<Task> {
     createdAt: now,
     deferCount: 0,
     splitRefuseCount: 0,
-    state: 'active',
+    state: "active",
     updatedAt: now,
     schemaVersion: 1,
   };
@@ -78,7 +80,11 @@ export async function insert(task: Task, now: number): Promise<void> {
   await db.tasks.add({ ...task, updatedAt: now, schemaVersion: 1 });
 }
 
-export async function update(id: TaskId, patch: Partial<Task>, now: number): Promise<void> {
+export async function update(
+  id: TaskId,
+  patch: Partial<Task>,
+  now: number,
+): Promise<void> {
   await db.tasks.update(id, { ...patch, updatedAt: now });
 }
 
