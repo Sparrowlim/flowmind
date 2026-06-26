@@ -1,1 +1,63 @@
 @import "tailwindcss";
+
+/* 라이트/다크는 클래스가 아니라 런타임 속성으로 토글: document.documentElement.dataset.theme = 'dark' | 'light' */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+@theme {
+  --font-display: "Gowun Batang", serif;
+  --font-body: "Gowun Dodum", sans-serif;
+
+  /* 의미 토큰 — 기본값(라이트). 다크는 아래 [data-theme='dark']에서 같은 변수만 재정의. */
+  --color-bg: #f4eee3; /* cream */
+  --color-surface: #fffdf8;
+  --color-border: #efe7d8;
+  --color-ink: #2e2a24;
+  --color-ink-soft: #8a8175;
+  --color-ink-faint: #a89e8e;
+
+  --color-accent: #d26a4c; /* terracotta — 주 액션(시작/마감임박) */
+  --color-accent-soft: #f6e2d8;
+  --color-accent-text: #b3543a;
+
+  --color-calm: #7e977e; /* sage — 차분한 보조 배지(다음 체크인, 미룸 안내) */
+  --color-calm-soft: #e2e8dd;
+  --color-calm-text: #5e7460;
+
+  --color-dashed: #d8b9a8; /* "왜 지금?" 점선 힌트 보더 */
+
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 26px;
+
+  --shadow-accent: 0 14px 26px -4px rgb(210 106 76 / 0.5);
+  --shadow-card: 0 18px 40px -8px rgb(60 45 30 / 0.22);
+}
+
+[data-theme="dark"] {
+  --color-bg: #0c0a08;
+  --color-surface: #201d19;
+  --color-border: #3a342c;
+  --color-ink: #f0eadf;
+  --color-ink-soft: #a89e8e;
+  --color-ink-faint: #766e61;
+
+  --color-accent: #e27a5b;
+  --color-accent-soft: #3a2a23;
+  --color-accent-text: #e89a85;
+
+  --color-calm: #7e977e;
+  --color-calm-soft: #2b3329;
+  --color-calm-text: #9db89d;
+
+  --color-dashed: #5a4a3f;
+
+  --shadow-accent: 0 14px 26px -4px rgb(226 122 91 / 0.45);
+  --shadow-card: 0 18px 40px -8px rgb(0 0 0 / 0.6);
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
