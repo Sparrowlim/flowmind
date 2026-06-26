@@ -15,11 +15,19 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
+    /* Path aliases — ADR-0002 §3 계층 (ui → core ← data, platform → ui). ui 계층 = src/(Vite 기본, 별도 ui/ 없음) */
+    "paths": {
+      "@core/*": ["./core/*"],
+      "@data/*": ["./data/*"],
+      "@ui/*": ["./src/*"],
+      "@platform/*": ["./platform/*"]
+    },
+
     /* Linting */
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": ["src", "core", "data", "platform"]
 }
