@@ -1,15 +1,17 @@
 // engine-flow.md ②③ — 상태 전이(시작/일시정지/완료/미룸/쪼개기/보관/수정).
 // core 규칙: 아무것도 import 안 함(타입+age 헬퍼만 제외), now는 인자로 주입, 순수 함수만.
 
-import { startOfNextUtcDay } from '../engine/age';
-import type { EngineConfig, Task, TaskId } from '../engine/types';
+import { startOfNextUtcDay } from "../engine/age";
+import type { EngineConfig, Task, TaskId } from "../engine/types";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const LONG_DORMANT_MS = 7 * DAY_MS; // 자동쪼개기 2회 거부 → 장기 재우기(plan §2.4)
 const ARCHIVE_DORMANT_MS = 30 * DAY_MS; // 수동 "보관함으로 보내기"
 
-export function startFocus(now: number): Pick<Task, 'state' | 'focusPausedAt' | 'lastServedAt'> {
-  return { state: 'focus', focusPausedAt: undefined, lastServedAt: now };
+export function startFocus(
+  now: number,
+): Pick<Task, "state" | "focusPausedAt" | "lastServedAt"> {
+  return { state: "focus", focusPausedAt: undefined, lastServedAt: now };
 }
 
 // sessionElapsedSec: 이번 집중 세션에서 흐른 시간(UI가 now - 세션시작 으로 계산해 전달).
@@ -17,11 +19,14 @@ export function pauseFocus(
   task: Task,
   now: number,
   sessionElapsedSec: number,
-): Pick<Task, 'focusPausedAt' | 'accumulatedSec'> {
-  return { focusPausedAt: now, accumulatedSec: (task.accumulatedSec ?? 0) + sessionElapsedSec };
+): Pick<Task, "focusPausedAt" | "accumulatedSec"> {
+  return {
+    focusPausedAt: now,
+    accumulatedSec: (task.accumulatedSec ?? 0) + sessionElapsedSec,
+  };
 }
 
-export function resumeFocus(): Pick<Task, 'focusPausedAt'> {
+export function resumeFocus(): Pick<Task, "focusPausedAt"> {
   return { focusPausedAt: undefined };
 }
 
@@ -29,9 +34,9 @@ export function completeFocus(
   task: Task,
   _now: number,
   sessionElapsedSec: number,
-): Pick<Task, 'state' | 'focusPausedAt' | 'accumulatedSec' | 'deferCount'> {
+): Pick<Task, "state" | "focusPausedAt" | "accumulatedSec" | "deferCount"> {
   return {
-    state: 'done',
+    state: "done",
     focusPausedAt: undefined,
     accumulatedSec: (task.accumulatedSec ?? 0) + sessionElapsedSec,
     deferCount: 0,
@@ -42,7 +47,7 @@ export function completeFocus(
 export function deferTask(
   task: Task,
   now: number,
-): Pick<Task, 'deferCount' | 'lastServedAt' | 'dormantUntil'> {
+): Pick<Task, "deferCount" | "lastServedAt" | "dormantUntil"> {
   return {
     deferCount: task.deferCount + 1,
     lastServedAt: now,
@@ -55,7 +60,10 @@ export function refuseSplit(
   task: Task,
   now: number,
   cfg: EngineConfig,
-): Pick<Task, 'deferCount' | 'splitRefuseCount' | 'lastServedAt' | 'dormantUntil'> {
+): Pick<
+  Task,
+  "deferCount" | "splitRefuseCount" | "lastServedAt" | "dormantUntil"
+> {
   const nextRefuseCount = task.splitRefuseCount + 1;
   if (nextRefuseCount >= cfg.splitRefuseMax) {
     return {
@@ -79,7 +87,7 @@ export function acceptSplit(
   firstStepTitle: string,
   childId: TaskId,
   now: number,
-): { parentPatch: Pick<Task, 'deferCount' | 'splitRefuseCount'>; child: Task } {
+): { parentPatch: Pick<Task, "deferCount" | "splitRefuseCount">; child: Task } {
   return {
     parentPatch: { deferCount: 0, splitRefuseCount: 0 },
     child: {
@@ -90,15 +98,15 @@ export function acceptSplit(
       createdAt: now,
       deferCount: 0,
       splitRefuseCount: 0,
-      state: 'active',
+      state: "active",
     },
   };
 }
 
-export function manualArchive(now: number): Pick<Task, 'dormantUntil'> {
+export function manualArchive(now: number): Pick<Task, "dormantUntil"> {
   return { dormantUntil: now + ARCHIVE_DORMANT_MS };
 }
 
-export function editTitle(title: string): Pick<Task, 'title'> {
+export function editTitle(title: string): Pick<Task, "title"> {
   return { title };
 }

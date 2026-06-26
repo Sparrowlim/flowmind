@@ -1,9 +1,9 @@
 // Phase 1 — core/state/transitions 유닛 테스트. IO 없는 순수 함수라 node 환경에서 즉시 검증 가능.
 
-import { describe, expect, it } from 'vitest';
-import { startOfNextUtcDay } from '../engine/age';
-import { DEFAULT_CONFIG } from '../engine/config';
-import type { Task } from '../engine/types';
+import { describe, expect, it } from "vitest";
+import { startOfNextUtcDay } from "../engine/age";
+import { DEFAULT_CONFIG } from "../engine/config";
+import type { Task } from "../engine/types";
 import {
   acceptSplit,
   completeFocus,
@@ -14,49 +14,59 @@ import {
   refuseSplit,
   resumeFocus,
   startFocus,
-} from './transitions';
+} from "./transitions";
 
 const NOW = Date.UTC(2026, 5, 27, 10, 0, 0); // 2026-06-27 10:00 UTC
 
 function makeTask(overrides: Partial<Task> = {}): Task {
   return {
-    id: 'task-1',
-    title: '보고서 초안 1페이지 쓰기',
+    id: "task-1",
+    title: "보고서 초안 1페이지 쓰기",
     important: false,
     createdAt: NOW - 1000,
     deferCount: 0,
     splitRefuseCount: 0,
-    state: 'active',
+    state: "active",
     ...overrides,
   };
 }
 
-describe('startFocus', () => {
-  it('진입 시 focus 상태로 전환하고 lastServedAt을 now로 갱신', () => {
-    expect(startFocus(NOW)).toEqual({ state: 'focus', focusPausedAt: undefined, lastServedAt: NOW });
+describe("startFocus", () => {
+  it("진입 시 focus 상태로 전환하고 lastServedAt을 now로 갱신", () => {
+    expect(startFocus(NOW)).toEqual({
+      state: "focus",
+      focusPausedAt: undefined,
+      lastServedAt: NOW,
+    });
   });
 });
 
-describe('pauseFocus / resumeFocus', () => {
-  it('pause는 세션 경과초를 accumulatedSec에 누적', () => {
+describe("pauseFocus / resumeFocus", () => {
+  it("pause는 세션 경과초를 accumulatedSec에 누적", () => {
     const task = makeTask({ accumulatedSec: 60 });
-    expect(pauseFocus(task, NOW, 30)).toEqual({ focusPausedAt: NOW, accumulatedSec: 90 });
+    expect(pauseFocus(task, NOW, 30)).toEqual({
+      focusPausedAt: NOW,
+      accumulatedSec: 90,
+    });
   });
 
-  it('accumulatedSec이 없으면 0부터 누적', () => {
-    expect(pauseFocus(makeTask(), NOW, 12)).toEqual({ focusPausedAt: NOW, accumulatedSec: 12 });
+  it("accumulatedSec이 없으면 0부터 누적", () => {
+    expect(pauseFocus(makeTask(), NOW, 12)).toEqual({
+      focusPausedAt: NOW,
+      accumulatedSec: 12,
+    });
   });
 
-  it('resume은 focusPausedAt만 해제', () => {
+  it("resume은 focusPausedAt만 해제", () => {
     expect(resumeFocus()).toEqual({ focusPausedAt: undefined });
   });
 });
 
-describe('completeFocus', () => {
-  it('done 전환 + 누적시간 합산 + 미룸횟수 리셋', () => {
+describe("completeFocus", () => {
+  it("done 전환 + 누적시간 합산 + 미룸횟수 리셋", () => {
     const task = makeTask({ accumulatedSec: 100, deferCount: 2 });
     expect(completeFocus(task, NOW, 20)).toEqual({
-      state: 'done',
+      state: "done",
       focusPausedAt: undefined,
       accumulatedSec: 120,
       deferCount: 0,
@@ -64,8 +74,8 @@ describe('completeFocus', () => {
   });
 });
 
-describe('deferTask', () => {
-  it('미룸 횟수 +1, 나이 리셋(lastServedAt=now), 다음 체크인까지 재우기', () => {
+describe("deferTask", () => {
+  it("미룸 횟수 +1, 나이 리셋(lastServedAt=now), 다음 체크인까지 재우기", () => {
     const task = makeTask({ deferCount: 1 });
     expect(deferTask(task, NOW)).toEqual({
       deferCount: 2,
@@ -75,8 +85,8 @@ describe('deferTask', () => {
   });
 });
 
-describe('refuseSplit', () => {
-  it('splitRefuseMax 미달이면 다음 체크인까지만 재우기', () => {
+describe("refuseSplit", () => {
+  it("splitRefuseMax 미달이면 다음 체크인까지만 재우기", () => {
     const task = makeTask({ deferCount: 3, splitRefuseCount: 0 });
     expect(refuseSplit(task, NOW, DEFAULT_CONFIG)).toEqual({
       deferCount: 4,
@@ -86,8 +96,11 @@ describe('refuseSplit', () => {
     });
   });
 
-  it('splitRefuseMax 도달 시 장기 재우기(7일) + 카운터 리셋(루프 종결)', () => {
-    const task = makeTask({ deferCount: 5, splitRefuseCount: DEFAULT_CONFIG.splitRefuseMax - 1 });
+  it("splitRefuseMax 도달 시 장기 재우기(7일) + 카운터 리셋(루프 종결)", () => {
+    const task = makeTask({
+      deferCount: 5,
+      splitRefuseCount: DEFAULT_CONFIG.splitRefuseMax - 1,
+    });
     const patch = refuseSplit(task, NOW, DEFAULT_CONFIG);
     expect(patch.deferCount).toBe(0);
     expect(patch.splitRefuseCount).toBe(0);
@@ -95,32 +108,41 @@ describe('refuseSplit', () => {
   });
 });
 
-describe('acceptSplit', () => {
-  it('부모 회피 카운터 리셋 + 자식 task 생성', () => {
+describe("acceptSplit", () => {
+  it("부모 회피 카운터 리셋 + 자식 task 생성", () => {
     const parent = makeTask({ deferCount: 3, splitRefuseCount: 1 });
-    const { parentPatch, child } = acceptSplit(parent, '자료 폴더 하나만 열기', 'child-1', NOW);
+    const { parentPatch, child } = acceptSplit(
+      parent,
+      "자료 폴더 하나만 열기",
+      "child-1",
+      NOW,
+    );
     expect(parentPatch).toEqual({ deferCount: 0, splitRefuseCount: 0 });
     expect(child).toEqual({
-      id: 'child-1',
-      title: '자료 폴더 하나만 열기',
-      parentId: 'task-1',
+      id: "child-1",
+      title: "자료 폴더 하나만 열기",
+      parentId: "task-1",
       important: false,
       createdAt: NOW,
       deferCount: 0,
       splitRefuseCount: 0,
-      state: 'active',
+      state: "active",
     });
   });
 });
 
-describe('manualArchive', () => {
-  it('30일 후로 재우기', () => {
-    expect(manualArchive(NOW)).toEqual({ dormantUntil: NOW + 30 * 24 * 60 * 60 * 1000 });
+describe("manualArchive", () => {
+  it("30일 후로 재우기", () => {
+    expect(manualArchive(NOW)).toEqual({
+      dormantUntil: NOW + 30 * 24 * 60 * 60 * 1000,
+    });
   });
 });
 
-describe('editTitle', () => {
-  it('제목만 교체', () => {
-    expect(editTitle('치과 예약 전화하기')).toEqual({ title: '치과 예약 전화하기' });
+describe("editTitle", () => {
+  it("제목만 교체", () => {
+    expect(editTitle("치과 예약 전화하기")).toEqual({
+      title: "치과 예약 전화하기",
+    });
   });
 });
