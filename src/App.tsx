@@ -1,23 +1,30 @@
-// 캡처→지금카드→집중→완료 핵심 루프(Phase 2) + 쪼개기/빈 상태/보관함/···메뉴(Phase 3).
+// 캡처→지금카드→집중→완료 핵심 루프(Phase 2) + 쪼개기/빈 상태/보관함/···메뉴(Phase 3)
+// + 온보딩/일일 체크인 게이트/일시정지·재개/설정·다크모드(Phase 4).
 // 콘텐츠는 항상 엔진(core/engine)이 결정, 내비게이션만 로컬 view state.
-// 온보딩/체크인 게이트/설정은 Phase 4에서 추가.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { pickNextCard } from "@core/engine/pickNextCard";
 import { DEFAULT_CONFIG } from "@core/engine/config";
 import type { Task, TaskId } from "@core/engine/types";
 import { Archive } from "./screens/Archive";
 import { AutoSplitSuggestion } from "./screens/AutoSplitSuggestion";
 import { Capture } from "./screens/Capture";
+import { CheckIn } from "./screens/CheckIn";
+import { CheckInSkipped } from "./screens/CheckInSkipped";
 import { CompletedInterstitial } from "./screens/CompletedInterstitial";
 import { EmptyAllDone } from "./screens/EmptyAllDone";
 import { EmptyDormant } from "./screens/EmptyDormant";
 import { Focus } from "./screens/Focus";
 import { NowCard } from "./screens/NowCard";
+import { Onboarding } from "./screens/Onboarding";
+import { Paused } from "./screens/Paused";
+import { Settings } from "./screens/Settings";
 import { SplitFirstStep } from "./screens/SplitFirstStep";
 import { TaskActionMenu } from "./screens/TaskActionMenu";
 import { useEngineDecision } from "./hooks/useEngineDecision";
+import { useSettings } from "./hooks/useSettings";
 import { useTasks } from "./hooks/useTasks";
+import { isDismissedToday, needsCheckin, todayUtcDateString } from "./lib/checkin";
 
 type View =
   | { kind: "engine" }
@@ -28,10 +35,12 @@ type View =
 function App() {
   const {
     tasks,
-    loading,
+    loading: tasksLoading,
     now,
     capture,
     startFocus,
+    pauseFocus,
+    resumeFocus,
     completeFocus,
     deferTask,
     refuseSplit,
@@ -41,9 +50,12 @@ function App() {
     softDelete,
     wakeNow,
   } = useTasks();
+  const { settings, loading: settingsLoading, update: updateSettings } =
+    useSettings();
   const [view, setView] = useState<View>({ kind: "engine" });
   const [captureOpen, setCaptureOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [taskMenuTaskId, setTaskMenuTaskId] = useState<TaskId | null>(null);
   const [completedNext, setCompletedNext] = useState<Task | undefined>(
     undefined,
@@ -57,10 +69,32 @@ function App() {
       t.dormantUntil > now,
   );
 
-  if (loading) {
+  const theme = settings?.theme;
+  useEffect(() => {
+    if (theme) document.documentElement.dataset.theme = theme;
+  }, [theme]);
+
+  if (tasksLoading || settingsLoading || !settings) {
     return (
       <div className="flex min-h-screen items-center justify-center font-body text-ink-faint">
         불러오는 중…
+      </div>
+    );
+  }
+
+  if (!settings.onboarded) {
+    return (
+      <div className="relative mx-auto min-h-screen max-w-[480px] bg-bg">
+        <Onboarding
+          onComplete={async ({ title, checkinTime }) => {
+            if (title) await capture({ title });
+            await updateSettings({
+              onboarded: true,
+              checkinTime,
+              lastCheckinDate: todayUtcDateString(Date.now()),
+            });
+          }}
+        />
       </div>
     );
   }
@@ -85,6 +119,16 @@ function App() {
   const handleSplitSubmit = async (parentId: TaskId, stepTitles: string[]) => {
     const childId = await acceptSplitAndStart(parentId, stepTitles);
     if (childId) setView({ kind: "focus", taskId: childId });
+  };
+
+  const handlePause = async (id: TaskId, sessionElapsedSec: number) => {
+    await pauseFocus(id, sessionElapsedSec);
+    setView({ kind: "engine" });
+  };
+
+  const handleResume = async (id: TaskId) => {
+    await resumeFocus(id);
+    setView({ kind: "focus", taskId: id });
   };
 
   const handleWakeOne = async () => {
@@ -118,7 +162,7 @@ function App() {
           />
         );
       case "resume":
-        return <Focus task={decision.task} onComplete={handleComplete} />;
+        return <Paused task={decision.task} onResume={handleResume} />;
       case "empty-all-done":
         return (
           <EmptyAllDone now={now} onCapture={() => setCaptureOpen(true)} />
@@ -132,9 +176,27 @@ function App() {
     ? tasks.find((t) => t.id === taskMenuTaskId)
     : undefined;
 
+  const checkinNeeded = needsCheckin(settings, now);
+  const todaySkipped = isDismissedToday(settings, now);
+  const gated = checkinNeeded || todaySkipped;
+  const checkedInToday = () =>
+    updateSettings({ lastCheckinDate: todayUtcDateString(Date.now()) });
+
   return (
     <div className="relative mx-auto min-h-screen max-w-[480px] bg-bg">
-      {view.kind === "engine" && renderEngine()}
+      {view.kind === "engine" && checkinNeeded && (
+        <CheckIn
+          decision={decision}
+          onCheckIn={checkedInToday}
+          onSkipToday={() =>
+            updateSettings({ dismissedToday: todayUtcDateString(Date.now()) })
+          }
+        />
+      )}
+      {view.kind === "engine" && !checkinNeeded && todaySkipped && (
+        <CheckInSkipped onOverride={checkedInToday} />
+      )}
+      {view.kind === "engine" && !gated && renderEngine()}
       {view.kind === "split" &&
         (() => {
           const task = tasks.find((t) => t.id === view.taskId);
@@ -146,7 +208,11 @@ function App() {
         (() => {
           const task = tasks.find((t) => t.id === view.taskId);
           return task ? (
-            <Focus task={task} onComplete={handleComplete} />
+            <Focus
+              task={task}
+              onComplete={handleComplete}
+              onPause={handlePause}
+            />
           ) : null;
         })()}
       {view.kind === "completed" && (
@@ -156,15 +222,24 @@ function App() {
           onStop={() => setView({ kind: "engine" })}
         />
       )}
-      {view.kind === "engine" && (
+      {view.kind === "engine" && !gated && (
         <>
-          <button
-            type="button"
-            onClick={() => setArchiveOpen(true)}
-            className="fixed top-6 left-6 z-40 font-body text-sm text-ink-faint"
-          >
-            보관함{dormantTasks.length > 0 ? ` (${dormantTasks.length})` : ""}
-          </button>
+          {/* 둘 다 top-left에 모음 — top-right는 NowCard 자체의 "···" 메뉴 자리라 비워둠(겹침 방지). */}
+          <div className="fixed top-6 left-6 z-40 flex items-center gap-3 font-body text-sm text-ink-faint">
+            {!settings.oneAtATime && (
+              <button type="button" onClick={() => setArchiveOpen(true)}>
+                보관함
+                {dormantTasks.length > 0 ? ` (${dormantTasks.length})` : ""}
+              </button>
+            )}
+            <button
+              type="button"
+              aria-label="설정"
+              onClick={() => setSettingsOpen(true)}
+            >
+              설정
+            </button>
+          </div>
           <button
             type="button"
             onClick={() => setCaptureOpen(true)}
@@ -183,6 +258,13 @@ function App() {
           tasks={dormantTasks}
           now={now}
           onClose={() => setArchiveOpen(false)}
+        />
+      )}
+      {settingsOpen && (
+        <Settings
+          settings={settings}
+          onUpdate={updateSettings}
+          onClose={() => setSettingsOpen(false)}
         />
       )}
       {taskMenuTask && (

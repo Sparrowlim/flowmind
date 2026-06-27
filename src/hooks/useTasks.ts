@@ -36,6 +36,21 @@ export function useTasks() {
     await taskRepository.update(id, transitions.startFocus(now), now);
   };
 
+  const pauseFocus = async (id: TaskId, sessionElapsedSec: number) => {
+    const task = await taskRepository.get(id);
+    if (!task) return;
+    const now = Date.now();
+    await taskRepository.update(
+      id,
+      transitions.pauseFocus(task, now, sessionElapsedSec),
+      now,
+    );
+  };
+
+  const resumeFocus = async (id: TaskId) => {
+    await taskRepository.update(id, transitions.resumeFocus(), Date.now());
+  };
+
   const completeFocus = async (id: TaskId, sessionElapsedSec: number) => {
     const task = await taskRepository.get(id);
     if (!task) return;
@@ -105,6 +120,8 @@ export function useTasks() {
     now,
     capture,
     startFocus,
+    pauseFocus,
+    resumeFocus,
     completeFocus,
     deferTask,
     refuseSplit,
