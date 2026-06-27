@@ -11,6 +11,7 @@ export function useSettings() {
   );
 
   useEffect(() => {
+    settingsRepository.ensureSeeded();
     const subscription = liveQuery(() => settingsRepository.get()).subscribe({
       next: setSettings,
       error: console.error,

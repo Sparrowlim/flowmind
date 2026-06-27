@@ -2,15 +2,20 @@
 
 import { db, DEFAULT_SETTINGS, type StoredSettings } from "./db";
 
+// liveQuery(() => get())의 querier로 쓰이므로 순수 읽기여야 한다 — Dexie는 liveQuery
+// querier를 readonly 트랜잭션으로 실행해서, 안에서 쓰기(add/put)를 하면 add든 put이든
+// ReadOnlyError("Readwrite transaction in liveQuery context")로 던져지고 구독이
+// next 없이 끊긴다(settingsLoading이 영원히 true로 남는 버그). 시드는 ensureSeeded로 분리.
 export async function get(): Promise<StoredSettings> {
   const existing = await db.settings.get("singleton");
-  if (existing) return existing;
-  // put(upsert), not add() — StrictMode가 같은 liveQuery 콜백을 거의 동시에 두 번
-  // 실행하면 두 호출 모두 "없음"을 보고 동시에 시드를 써넣으려 하는데, add()는
-  // 중복 키에서 ConstraintError를 던져 liveQuery 구독이 next 없이 끊겨버린다
-  // (settingsLoading이 영원히 true로 남는 버그). put은 같은 값을 덮어써도 안전.
-  await db.settings.put(DEFAULT_SETTINGS);
-  return DEFAULT_SETTINGS;
+  return existing ?? DEFAULT_SETTINGS;
+}
+
+// liveQuery 바깥(일반 readwrite 트랜잭션)에서 한 번만 호출하는 시드 함수.
+// put(upsert)이라 동시에 여러 번 불려도 안전.
+export async function ensureSeeded(): Promise<void> {
+  const existing = await db.settings.get("singleton");
+  if (!existing) await db.settings.put(DEFAULT_SETTINGS);
 }
 
 export async function update(
