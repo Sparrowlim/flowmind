@@ -8,7 +8,7 @@ export function PrimaryButton({ className = "", ...props }: ButtonProps) {
   return (
     <button
       type="button"
-      className={`w-full rounded-lg bg-accent px-5 py-[19px] text-center font-body text-lg font-bold text-white shadow-accent ${className}`}
+      className={`w-full rounded-lg bg-accent px-5 py-[19px] text-center font-body text-lg font-bold text-white shadow-accent disabled:opacity-40 ${className}`}
       {...props}
     />
   );

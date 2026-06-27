@@ -109,25 +109,47 @@ describe("refuseSplit", () => {
 });
 
 describe("acceptSplit", () => {
-  it("부모 회피 카운터 리셋 + 자식 task 생성", () => {
+  it("부모 회피 카운터 리셋 + 다음 체크인까지 보류 + 자식 1개 생성", () => {
     const parent = makeTask({ deferCount: 3, splitRefuseCount: 1 });
-    const { parentPatch, child } = acceptSplit(
+    const { parentPatch, children } = acceptSplit(
       parent,
-      "자료 폴더 하나만 열기",
-      "child-1",
+      ["자료 폴더 하나만 열기"],
+      ["child-1"],
       NOW,
     );
-    expect(parentPatch).toEqual({ deferCount: 0, splitRefuseCount: 0 });
-    expect(child).toEqual({
-      id: "child-1",
-      title: "자료 폴더 하나만 열기",
-      parentId: "task-1",
-      important: false,
-      createdAt: NOW,
+    expect(parentPatch).toEqual({
       deferCount: 0,
       splitRefuseCount: 0,
-      state: "active",
+      dormantUntil: startOfNextUtcDay(NOW),
     });
+    expect(children).toEqual([
+      {
+        id: "child-1",
+        title: "자료 폴더 하나만 열기",
+        parentId: "task-1",
+        important: false,
+        createdAt: NOW,
+        deferCount: 0,
+        splitRefuseCount: 0,
+        state: "active",
+      },
+    ]);
+  });
+
+  it("평평한 리스트로 최대 3개까지 동시 생성", () => {
+    const parent = makeTask();
+    const { children } = acceptSplit(
+      parent,
+      ["제목 줄 쓰기", "개요 한 줄 잡기", "참고자료 1개 찾기"],
+      ["c1", "c2", "c3"],
+      NOW,
+    );
+    expect(children.map((c) => c.title)).toEqual([
+      "제목 줄 쓰기",
+      "개요 한 줄 잡기",
+      "참고자료 1개 찾기",
+    ]);
+    expect(children.every((c) => c.parentId === "task-1")).toBe(true);
   });
 });
 

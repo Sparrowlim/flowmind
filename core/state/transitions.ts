@@ -81,25 +81,34 @@ export function refuseSplit(
   };
 }
 
-// 쪼개기 수락 = 의미 있는 관여 → 부모의 회피 카운터 리셋(plan §2.4). 자식은 새 task로 분리 생성.
+// 쪼개기 수락 = 의미 있는 관여 → 부모의 회피 카운터 리셋(plan §2.4) + 다음 체크인까지 보류
+// (와이어프레임 04: "부모는 사라지지 않고 진행중 보관"). 평평한 리스트로 1~3개 스텝.
+// 첫 스텝은 호출부가 즉시 startFocus, 나머지는 풀에 그대로 추가(확인 화면 없음).
 export function acceptSplit(
   parent: Task,
-  firstStepTitle: string,
-  childId: TaskId,
+  stepTitles: string[],
+  childIds: TaskId[],
   now: number,
-): { parentPatch: Pick<Task, "deferCount" | "splitRefuseCount">; child: Task } {
+): {
+  parentPatch: Pick<Task, "deferCount" | "splitRefuseCount" | "dormantUntil">;
+  children: Task[];
+} {
   return {
-    parentPatch: { deferCount: 0, splitRefuseCount: 0 },
-    child: {
-      id: childId,
-      title: firstStepTitle,
+    parentPatch: {
+      deferCount: 0,
+      splitRefuseCount: 0,
+      dormantUntil: startOfNextUtcDay(now),
+    },
+    children: stepTitles.map((title, i) => ({
+      id: childIds[i]!,
+      title,
       parentId: parent.id,
       important: false,
       createdAt: now,
       deferCount: 0,
       splitRefuseCount: 0,
       state: "active",
-    },
+    })),
   };
 }
 

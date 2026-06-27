@@ -10,11 +10,17 @@ import * as taskRepository from "@data/local/taskRepository";
 
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[] | undefined>(undefined);
+  // tasks 갱신 시점의 시각. 렌더 중 Date.now()를 직접 부르면 안 되므로(react-hooks 순수성
+  // 규칙) liveQuery 콜백(=데이터가 실제로 바뀐 시점)에서만 함께 갱신한다.
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     const subscription = liveQuery(() => taskRepository.listActive()).subscribe(
       {
-        next: setTasks,
+        next: (result) => {
+          setTasks(result);
+          setNow(Date.now());
+        },
         error: console.error,
       },
     );
@@ -59,13 +65,53 @@ export function useTasks() {
     );
   };
 
+  // 쪼개기 수락(02-1·04 공용) — 부모 회피카운터 리셋 + 자식 생성 + 자식 바로 집중 시작.
+  // 부모 회피카운터 리셋 + 다음 체크인까지 보류 + 1~3개 자식 생성, 첫 자식만 바로
+  // 집중 시작(나머지는 풀에 추가, 확인 화면 없음 — 와이어프레임 04).
+  const acceptSplitAndStart = async (parentId: TaskId, stepTitles: string[]) => {
+    const parent = await taskRepository.get(parentId);
+    if (!parent || stepTitles.length === 0) return undefined;
+    const now = Date.now();
+    const childIds = stepTitles.map(() => crypto.randomUUID());
+    const { parentPatch, children } = transitions.acceptSplit(parent, stepTitles, childIds, now);
+    await taskRepository.update(parentId, parentPatch, now);
+    for (const child of children) await taskRepository.insert(child, now);
+    const firstChildId = childIds[0]!;
+    await taskRepository.update(firstChildId, transitions.startFocus(now), now);
+    return firstChildId;
+  };
+
+  const editTitle = async (id: TaskId, title: string) => {
+    await taskRepository.update(id, transitions.editTitle(title), Date.now());
+  };
+
+  const manualArchive = async (id: TaskId) => {
+    const now = Date.now();
+    await taskRepository.update(id, transitions.manualArchive(now), now);
+  };
+
+  const softDelete = async (id: TaskId) => {
+    await taskRepository.softDelete(id, Date.now());
+  };
+
+  // 보관함 "그래도 하나 볼래요" / 비움 "그래도 하나 볼래요" — 재우기를 즉시 해제.
+  const wakeNow = async (id: TaskId) => {
+    await taskRepository.update(id, { dormantUntil: Date.now() }, Date.now());
+  };
+
   return {
     tasks: tasks ?? [],
     loading: tasks === undefined,
+    now,
     capture,
     startFocus,
     completeFocus,
     deferTask,
     refuseSplit,
+    acceptSplitAndStart,
+    editTitle,
+    manualArchive,
+    softDelete,
+    wakeNow,
   };
 }
