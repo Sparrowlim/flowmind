@@ -10,11 +10,18 @@ export function todayUtcDateString(now: number): string {
 // 오늘 아직 체크인 안 했고, "오늘은 쉬어갈래요"도 누르지 않은 상태.
 export function needsCheckin(settings: StoredSettings, now: number): boolean {
   const today = todayUtcDateString(now);
-  return settings.lastCheckinDate !== today && settings.dismissedToday !== today;
+  return (
+    settings.lastCheckinDate !== today && settings.dismissedToday !== today
+  );
 }
 
 // "오늘은 쉬어갈래요"를 눌러 오늘 하루는 카드 큐를 보지 않기로 한 상태.
-export function isDismissedToday(settings: StoredSettings, now: number): boolean {
+export function isDismissedToday(
+  settings: StoredSettings,
+  now: number,
+): boolean {
   const today = todayUtcDateString(now);
-  return settings.dismissedToday === today && settings.lastCheckinDate !== today;
+  return (
+    settings.dismissedToday === today && settings.lastCheckinDate !== today
+  );
 }

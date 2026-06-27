@@ -24,7 +24,11 @@ import { TaskActionMenu } from "./screens/TaskActionMenu";
 import { useEngineDecision } from "./hooks/useEngineDecision";
 import { useSettings } from "./hooks/useSettings";
 import { useTasks } from "./hooks/useTasks";
-import { isDismissedToday, needsCheckin, todayUtcDateString } from "./lib/checkin";
+import {
+  isDismissedToday,
+  needsCheckin,
+  todayUtcDateString,
+} from "./lib/checkin";
 
 type View =
   | { kind: "engine" }
@@ -50,8 +54,11 @@ function App() {
     softDelete,
     wakeNow,
   } = useTasks();
-  const { settings, loading: settingsLoading, update: updateSettings } =
-    useSettings();
+  const {
+    settings,
+    loading: settingsLoading,
+    update: updateSettings,
+  } = useSettings();
   const [view, setView] = useState<View>({ kind: "engine" });
   const [captureOpen, setCaptureOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);

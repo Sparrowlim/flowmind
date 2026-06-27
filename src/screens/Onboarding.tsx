@@ -29,8 +29,7 @@ export function Onboarding({
         </h1>
         <p className="mt-4 font-body text-[17px] leading-relaxed text-ink-soft">
           쌓인 목록도, 빨간 배지도 없어요.
-          <br />
-          딱 지금 할 하나만 골라드릴게요.
+          <br />딱 지금 할 하나만 골라드릴게요.
         </p>
         <PrimaryButton className="mt-10" onClick={() => setStep("capture")}>
           시작하기
@@ -60,7 +59,9 @@ export function Onboarding({
           autoFocus
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && title.trim() && setStep("checkin-time")}
+          onKeyDown={(e) =>
+            e.key === "Enter" && title.trim() && setStep("checkin-time")
+          }
           placeholder="예: 보고서 초안 1페이지 쓰기"
           className="mt-5 w-full rounded-lg border border-border bg-surface px-4 py-4 font-display text-xl text-ink outline-none"
         />
