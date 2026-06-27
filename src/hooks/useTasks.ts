@@ -36,6 +36,21 @@ export function useTasks() {
     await taskRepository.update(id, transitions.startFocus(now), now);
   };
 
+  const pauseFocus = async (id: TaskId, sessionElapsedSec: number) => {
+    const task = await taskRepository.get(id);
+    if (!task) return;
+    const now = Date.now();
+    await taskRepository.update(
+      id,
+      transitions.pauseFocus(task, now, sessionElapsedSec),
+      now,
+    );
+  };
+
+  const resumeFocus = async (id: TaskId) => {
+    await taskRepository.update(id, transitions.resumeFocus(), Date.now());
+  };
+
   const completeFocus = async (id: TaskId, sessionElapsedSec: number) => {
     const task = await taskRepository.get(id);
     if (!task) return;
@@ -68,12 +83,20 @@ export function useTasks() {
   // 쪼개기 수락(02-1·04 공용) — 부모 회피카운터 리셋 + 자식 생성 + 자식 바로 집중 시작.
   // 부모 회피카운터 리셋 + 다음 체크인까지 보류 + 1~3개 자식 생성, 첫 자식만 바로
   // 집중 시작(나머지는 풀에 추가, 확인 화면 없음 — 와이어프레임 04).
-  const acceptSplitAndStart = async (parentId: TaskId, stepTitles: string[]) => {
+  const acceptSplitAndStart = async (
+    parentId: TaskId,
+    stepTitles: string[],
+  ) => {
     const parent = await taskRepository.get(parentId);
     if (!parent || stepTitles.length === 0) return undefined;
     const now = Date.now();
     const childIds = stepTitles.map(() => crypto.randomUUID());
-    const { parentPatch, children } = transitions.acceptSplit(parent, stepTitles, childIds, now);
+    const { parentPatch, children } = transitions.acceptSplit(
+      parent,
+      stepTitles,
+      childIds,
+      now,
+    );
     await taskRepository.update(parentId, parentPatch, now);
     for (const child of children) await taskRepository.insert(child, now);
     const firstChildId = childIds[0]!;
@@ -105,6 +128,8 @@ export function useTasks() {
     now,
     capture,
     startFocus,
+    pauseFocus,
+    resumeFocus,
     completeFocus,
     deferTask,
     refuseSplit,

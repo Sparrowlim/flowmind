@@ -1,7 +1,8 @@
-// Phase 2 — 화면 03(집중→완료). 일시정지(08)는 Phase 4에서 추가, 지금은 "다 했어요"만.
+// Phase 2 — 화면 03(집중→완료). 일시정지(08, Paused.tsx)는 Phase 4에서 추가.
 
 import { useEffect, useState } from "react";
 import type { Task, TaskId } from "@core/engine/types";
+import { SecondaryButton } from "../components/Button";
 import { ProgressRing } from "../components/ProgressRing";
 
 function formatElapsed(totalSec: number): string {
@@ -13,9 +14,11 @@ function formatElapsed(totalSec: number): string {
 export function Focus({
   task,
   onComplete,
+  onPause,
 }: {
   task: Task;
   onComplete: (id: TaskId, sessionElapsedSec: number) => void;
+  onPause: (id: TaskId, sessionElapsedSec: number) => void;
 }) {
   const [sessionStart] = useState(() => Date.now());
   const [sessionElapsedSec, setSessionElapsedSec] = useState(0);
@@ -48,11 +51,17 @@ export function Focus({
       <button
         type="button"
         onClick={() => onComplete(task.id, sessionElapsedSec)}
-        className="mb-10 w-full rounded-lg px-5 py-[19px] text-center font-body text-lg font-bold"
+        className="w-full rounded-lg px-5 py-[19px] text-center font-body text-lg font-bold"
         style={{ background: "var(--color-ink)", color: "var(--color-bg)" }}
       >
         다 했어요
       </button>
+      <SecondaryButton
+        className="mt-3 mb-10"
+        onClick={() => onPause(task.id, sessionElapsedSec)}
+      >
+        잠깐 멈춤
+      </SecondaryButton>
     </div>
   );
 }
