@@ -23,12 +23,17 @@ export function NowCard({
   onOpenMenu: (id: TaskId) => void;
 }) {
   const task = decision.task;
-  const label = decision.kind === "new-greeting" ? "오늘 새로 담았어요" : whyNowLabel(decision.rule, task, now);
+  const label =
+    decision.kind === "new-greeting"
+      ? "오늘 새로 담았어요"
+      : whyNowLabel(decision.rule, task, now);
 
   return (
     <div className="flex min-h-screen flex-col px-7 pt-7">
       <div className="flex items-center justify-between">
-        <span className="font-body text-[15px] tracking-wide text-ink-faint">지금 할 일</span>
+        <span className="font-body text-[15px] tracking-wide text-ink-faint">
+          지금 할 일
+        </span>
         <button
           type="button"
           aria-label="더보기"
@@ -39,14 +44,25 @@ export function NowCard({
         </button>
       </div>
       <div className="flex flex-1 flex-col justify-center gap-6">
-        <h1 className="font-display text-[34px] leading-snug text-ink">{task.title}</h1>
+        <h1 className="font-display text-[34px] leading-snug text-ink">
+          {task.title}
+        </h1>
         <Badge variant="accent">왜 지금? · {label}</Badge>
       </div>
       <div className="flex flex-col gap-3 pb-10">
-        <PrimaryButton onClick={() => onStart(task.id)}>지금 시작</PrimaryButton>
+        <PrimaryButton onClick={() => onStart(task.id)}>
+          지금 시작
+        </PrimaryButton>
         <div className="flex gap-3">
-          <SecondaryButton onClick={() => onDefer(task.id)}>이따 다시</SecondaryButton>
-          <SecondaryButton onClick={() => onSplit(task.id)}>쪼갤래요</SecondaryButton>
+          <SecondaryButton onClick={() => onDefer(task.id)}>
+            이따 다시
+          </SecondaryButton>
+          {/* 쪼개기 카드(자식, parentId 있음)엔 '쪼갤래요' 없음 — 재귀 방지(plan §2.4) */}
+          {!task.parentId && (
+            <SecondaryButton onClick={() => onSplit(task.id)}>
+              쪼갤래요
+            </SecondaryButton>
+          )}
         </div>
       </div>
     </div>

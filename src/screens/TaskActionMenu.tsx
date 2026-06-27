@@ -55,7 +55,11 @@ export function TaskActionMenu({
         이 일을 어떻게 할까요?
       </div>
       <div className="flex flex-col divide-y divide-border border-t border-border">
-        <button type="button" className="py-4 text-center font-body text-lg text-ink" onClick={() => setEditing(true)}>
+        <button
+          type="button"
+          className="py-4 text-center font-body text-lg text-ink"
+          onClick={() => setEditing(true)}
+        >
           제목 수정하기
         </button>
         <button

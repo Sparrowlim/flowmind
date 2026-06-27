@@ -45,11 +45,16 @@ function App() {
   const [captureOpen, setCaptureOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [taskMenuTaskId, setTaskMenuTaskId] = useState<TaskId | null>(null);
-  const [completedNext, setCompletedNext] = useState<Task | undefined>(undefined);
+  const [completedNext, setCompletedNext] = useState<Task | undefined>(
+    undefined,
+  );
 
   const decision = useEngineDecision(tasks, now);
   const dormantTasks = tasks.filter(
-    (t) => t.state !== "done" && t.dormantUntil !== undefined && t.dormantUntil > now,
+    (t) =>
+      t.state !== "done" &&
+      t.dormantUntil !== undefined &&
+      t.dormantUntil > now,
   );
 
   if (loading) {
@@ -77,8 +82,8 @@ function App() {
     setView({ kind: "completed" });
   };
 
-  const handleSplitSubmit = async (parentId: TaskId, firstStepTitle: string) => {
-    const childId = await acceptSplitAndStart(parentId, firstStepTitle);
+  const handleSplitSubmit = async (parentId: TaskId, stepTitles: string[]) => {
+    const childId = await acceptSplitAndStart(parentId, stepTitles);
     if (childId) setView({ kind: "focus", taskId: childId });
   };
 
@@ -115,13 +120,17 @@ function App() {
       case "resume":
         return <Focus task={decision.task} onComplete={handleComplete} />;
       case "empty-all-done":
-        return <EmptyAllDone now={now} onCapture={() => setCaptureOpen(true)} />;
+        return (
+          <EmptyAllDone now={now} onCapture={() => setCaptureOpen(true)} />
+        );
       case "empty-dormant":
         return <EmptyDormant onWakeOne={handleWakeOne} />;
     }
   }
 
-  const taskMenuTask = taskMenuTaskId ? tasks.find((t) => t.id === taskMenuTaskId) : undefined;
+  const taskMenuTask = taskMenuTaskId
+    ? tasks.find((t) => t.id === taskMenuTaskId)
+    : undefined;
 
   return (
     <div className="relative mx-auto min-h-screen max-w-[480px] bg-bg">
@@ -129,12 +138,16 @@ function App() {
       {view.kind === "split" &&
         (() => {
           const task = tasks.find((t) => t.id === view.taskId);
-          return task ? <SplitFirstStep task={task} onSubmit={handleSplitSubmit} /> : null;
+          return task ? (
+            <SplitFirstStep task={task} onSubmit={handleSplitSubmit} />
+          ) : null;
         })()}
       {view.kind === "focus" &&
         (() => {
           const task = tasks.find((t) => t.id === view.taskId);
-          return task ? <Focus task={task} onComplete={handleComplete} /> : null;
+          return task ? (
+            <Focus task={task} onComplete={handleComplete} />
+          ) : null;
         })()}
       {view.kind === "completed" && (
         <CompletedInterstitial
@@ -148,7 +161,7 @@ function App() {
           <button
             type="button"
             onClick={() => setArchiveOpen(true)}
-            className="fixed left-6 top-6 z-40 font-body text-sm text-ink-faint"
+            className="fixed top-6 left-6 z-40 font-body text-sm text-ink-faint"
           >
             보관함{dormantTasks.length > 0 ? ` (${dormantTasks.length})` : ""}
           </button>
@@ -156,14 +169,22 @@ function App() {
             type="button"
             onClick={() => setCaptureOpen(true)}
             aria-label="할 일 담기"
-            className="fixed bottom-8 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-accent font-display text-2xl text-white shadow-accent"
+            className="fixed right-6 bottom-8 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-accent font-display text-2xl text-white shadow-accent"
           >
             +
           </button>
         </>
       )}
-      {captureOpen && <Capture onClose={() => setCaptureOpen(false)} onSubmit={capture} />}
-      {archiveOpen && <Archive tasks={dormantTasks} now={now} onClose={() => setArchiveOpen(false)} />}
+      {captureOpen && (
+        <Capture onClose={() => setCaptureOpen(false)} onSubmit={capture} />
+      )}
+      {archiveOpen && (
+        <Archive
+          tasks={dormantTasks}
+          now={now}
+          onClose={() => setArchiveOpen(false)}
+        />
+      )}
       {taskMenuTask && (
         <TaskActionMenu
           task={taskMenuTask}

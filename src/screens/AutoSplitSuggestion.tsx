@@ -1,9 +1,12 @@
-// Phase 3 — 화면 02-1(자동 쪼개기 제안, 규칙② 전용). Decision.kind === 'auto-split'일 때 진입.
+// 화면 02-1(자동 쪼개기 제안, 규칙② 전용). Decision.kind === 'auto-split'일 때 진입.
+// 04와 동일한 쪼개기 입력(평평한 리스트 1~3개)을 공유.
 
 import { useState } from "react";
 import type { Task, TaskId } from "@core/engine/types";
 import { Badge } from "../components/Badge";
 import { PrimaryButton, SecondaryButton, TextLinkButton } from "../components/Button";
+
+const MAX_STEPS = 3;
 
 export function AutoSplitSuggestion({
   task,
@@ -12,11 +15,17 @@ export function AutoSplitSuggestion({
   onSkip,
 }: {
   task: Task;
-  onAccept: (parentId: TaskId, firstStepTitle: string) => void;
+  onAccept: (parentId: TaskId, stepTitles: string[]) => void;
   onStartAnyway: (id: TaskId) => void;
   onSkip: (id: TaskId) => void;
 }) {
-  const [firstStep, setFirstStep] = useState("");
+  const [steps, setSteps] = useState<string[]>([""]);
+
+  const submit = () => {
+    const titles = steps.map((s) => s.trim()).filter(Boolean);
+    if (titles.length === 0) return;
+    onAccept(task.id, titles);
+  };
 
   return (
     <div className="flex min-h-screen flex-col px-7 pt-7">
@@ -32,19 +41,31 @@ export function AutoSplitSuggestion({
         <div className="font-body text-[13px] font-bold tracking-wide text-accent-text">
           첫 걸음은 뭐예요?
         </div>
-        <input
-          autoFocus
-          value={firstStep}
-          onChange={(e) => setFirstStep(e.target.value)}
-          placeholder="예: 병원 번호만 찾아두기"
-          className="rounded-lg border-[1.5px] border-accent bg-surface px-4 py-4 font-display text-lg text-ink outline-none"
-        />
+        {steps.map((step, i) => (
+          <input
+            key={i}
+            autoFocus={i === 0}
+            value={step}
+            onChange={(e) => setSteps(steps.map((s, j) => (j === i ? e.target.value : s)))}
+            placeholder={i === 0 ? "예: 병원 번호만 찾아두기" : "다음 작은 걸음 (선택)"}
+            className="rounded-lg border-[1.5px] border-accent bg-surface px-4 py-4 font-display text-lg text-ink outline-none"
+          />
+        ))}
+        {steps.length < MAX_STEPS && (
+          <button
+            type="button"
+            onClick={() => setSteps([...steps, ""])}
+            className="self-start font-body text-sm text-ink-faint"
+          >
+            ＋ 하나 더 (선택)
+          </button>
+        )}
         <div className="font-body text-sm text-ink-faint">여기까지만 해도 충분해요</div>
       </div>
 
       <div className="flex-1" />
       <div className="mb-10 flex flex-col gap-3">
-        <PrimaryButton disabled={!firstStep.trim()} onClick={() => onAccept(task.id, firstStep.trim())}>
+        <PrimaryButton disabled={!steps[0]?.trim()} onClick={submit}>
           좋아, 쪼개기
         </PrimaryButton>
         <SecondaryButton onClick={() => onStartAnyway(task.id)}>아니, 그냥 시작할래</SecondaryButton>

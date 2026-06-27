@@ -15,13 +15,15 @@ export function useTasks() {
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
-    const subscription = liveQuery(() => taskRepository.listActive()).subscribe({
-      next: (result) => {
-        setTasks(result);
-        setNow(Date.now());
+    const subscription = liveQuery(() => taskRepository.listActive()).subscribe(
+      {
+        next: (result) => {
+          setTasks(result);
+          setNow(Date.now());
+        },
+        error: console.error,
       },
-      error: console.error,
-    });
+    );
     return () => subscription.unsubscribe();
   }, []);
 
@@ -64,16 +66,19 @@ export function useTasks() {
   };
 
   // 쪼개기 수락(02-1·04 공용) — 부모 회피카운터 리셋 + 자식 생성 + 자식 바로 집중 시작.
-  const acceptSplitAndStart = async (parentId: TaskId, firstStepTitle: string) => {
+  // 부모 회피카운터 리셋 + 다음 체크인까지 보류 + 1~3개 자식 생성, 첫 자식만 바로
+  // 집중 시작(나머지는 풀에 추가, 확인 화면 없음 — 와이어프레임 04).
+  const acceptSplitAndStart = async (parentId: TaskId, stepTitles: string[]) => {
     const parent = await taskRepository.get(parentId);
-    if (!parent) return undefined;
+    if (!parent || stepTitles.length === 0) return undefined;
     const now = Date.now();
-    const childId = crypto.randomUUID();
-    const { parentPatch, child } = transitions.acceptSplit(parent, firstStepTitle, childId, now);
+    const childIds = stepTitles.map(() => crypto.randomUUID());
+    const { parentPatch, children } = transitions.acceptSplit(parent, stepTitles, childIds, now);
     await taskRepository.update(parentId, parentPatch, now);
-    await taskRepository.insert(child, now);
-    await taskRepository.update(childId, transitions.startFocus(now), now);
-    return childId;
+    for (const child of children) await taskRepository.insert(child, now);
+    const firstChildId = childIds[0]!;
+    await taskRepository.update(firstChildId, transitions.startFocus(now), now);
+    return firstChildId;
   };
 
   const editTitle = async (id: TaskId, title: string) => {

@@ -14,7 +14,11 @@ export function Archive({
 }) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-bg px-7 pt-7">
-      <button type="button" onClick={onClose} className="self-start font-body text-base text-ink-soft">
+      <button
+        type="button"
+        onClick={onClose}
+        className="self-start font-body text-base text-ink-soft"
+      >
         ← 닫기
       </button>
       <h1 className="mt-4 font-display text-[28px] text-ink">쌓인 것들</h1>
@@ -26,15 +30,21 @@ export function Archive({
 
       <div className="mt-5 flex flex-col gap-3 overflow-y-auto">
         {tasks.length === 0 && (
-          <p className="font-body text-sm text-ink-faint">지금은 쉬고 있는 일이 없어요.</p>
+          <p className="font-body text-sm text-ink-faint">
+            지금은 쉬고 있는 일이 없어요.
+          </p>
         )}
         {tasks.map((task) => (
           <div
             key={task.id}
             className="flex items-center justify-between rounded-lg border border-border bg-surface px-4 py-4"
           >
-            <span className="font-display text-base text-ink">{task.title}</span>
-            <span className="font-body text-[13px] text-ink-faint">{ageDays(task, now)}일 전</span>
+            <span className="font-display text-base text-ink">
+              {task.title}
+            </span>
+            <span className="font-body text-[13px] text-ink-faint">
+              {ageDays(task, now)}일 전
+            </span>
           </div>
         ))}
       </div>

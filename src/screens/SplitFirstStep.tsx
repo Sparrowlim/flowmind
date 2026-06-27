@@ -1,17 +1,26 @@
-// Phase 3 — 화면 04(쪼갤래요, 첫 걸음). 일반 지금 카드의 "쪼갤래요" 버튼에서 진입.
+// 화면 04(쪼갤래요). 와이어프레임: 평평한 리스트로 1~3개 스텝, 첫 스텝만 즉시 집중 시작,
+// 나머지는 확인 화면 없이 풀에 추가. 부모는 다음 체크인까지 보류(core/state acceptSplit).
 
 import { useState } from "react";
 import type { Task, TaskId } from "@core/engine/types";
 import { PrimaryButton } from "../components/Button";
+
+const MAX_STEPS = 3;
 
 export function SplitFirstStep({
   task,
   onSubmit,
 }: {
   task: Task;
-  onSubmit: (parentId: TaskId, firstStepTitle: string) => void;
+  onSubmit: (parentId: TaskId, stepTitles: string[]) => void;
 }) {
-  const [firstStep, setFirstStep] = useState("");
+  const [steps, setSteps] = useState<string[]>([""]);
+
+  const submit = () => {
+    const titles = steps.map((s) => s.trim()).filter(Boolean);
+    if (titles.length === 0) return;
+    onSubmit(task.id, titles);
+  };
 
   return (
     <div className="flex min-h-screen flex-col px-7 pt-7">
@@ -29,24 +38,38 @@ export function SplitFirstStep({
         <div className="font-body text-[13px] font-bold tracking-wide text-accent-text">
           첫 걸음은 뭐예요?
         </div>
-        <input
-          autoFocus
-          value={firstStep}
-          onChange={(e) => setFirstStep(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && firstStep.trim() && onSubmit(task.id, firstStep.trim())}
-          placeholder="예: 자료 폴더 하나만 열기"
-          className="rounded-lg border-[1.5px] border-accent bg-surface px-4 py-4 font-display text-lg text-ink outline-none"
-        />
+        {steps.map((step, i) => (
+          <input
+            key={i}
+            autoFocus={i === 0}
+            value={step}
+            onChange={(e) => setSteps(steps.map((s, j) => (j === i ? e.target.value : s)))}
+            onKeyDown={(e) => e.key === "Enter" && submit()}
+            placeholder={i === 0 ? "예: 자료 폴더 하나만 열기" : "다음 작은 걸음 (선택)"}
+            className="rounded-lg border-[1.5px] border-accent bg-surface px-4 py-4 font-display text-lg text-ink outline-none"
+          />
+        ))}
+        {steps.length < MAX_STEPS && (
+          <button
+            type="button"
+            onClick={() => setSteps([...steps, ""])}
+            className="self-start font-body text-sm text-ink-faint"
+          >
+            ＋ 하나 더 (선택)
+          </button>
+        )}
+        <div className="font-body text-[13px] text-ink-faint">
+          첫 걸음부터 바로 시작돼요. 나머지는 풀에서 기다려요.
+        </div>
       </div>
 
       <div className="flex-1" />
-      <PrimaryButton
-        className="mb-10"
-        disabled={!firstStep.trim()}
-        onClick={() => onSubmit(task.id, firstStep.trim())}
-      >
+      <PrimaryButton className="mb-3" disabled={!steps[0]?.trim()} onClick={submit}>
         이 걸음부터
       </PrimaryButton>
+      <p className="mb-10 text-center font-body text-[13px] text-ink-faint">
+        쪼개기 카드엔 '쪼갤래요'가 없어요
+      </p>
     </div>
   );
 }

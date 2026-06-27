@@ -12,12 +12,20 @@ function startOfUtcDay(now: number): number {
   return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
 }
 
-export function EmptyAllDone({ now, onCapture }: { now: number; onCapture: () => void }) {
+export function EmptyAllDone({
+  now,
+  onCapture,
+}: {
+  now: number;
+  onCapture: () => void;
+}) {
   const [todayCount, setTodayCount] = useState<number | undefined>(undefined);
   const [weekCount, setWeekCount] = useState<number | undefined>(undefined);
 
   useEffect(() => {
-    const sub = liveQuery(() => taskRepository.countCompletedSince(startOfUtcDay(now))).subscribe({
+    const sub = liveQuery(() =>
+      taskRepository.countCompletedSince(startOfUtcDay(now)),
+    ).subscribe({
       next: setTodayCount,
       error: console.error,
     });
@@ -25,7 +33,9 @@ export function EmptyAllDone({ now, onCapture }: { now: number; onCapture: () =>
   }, [now]);
 
   useEffect(() => {
-    const sub = liveQuery(() => taskRepository.countCompletedSince(now - 7 * DAY_MS)).subscribe({
+    const sub = liveQuery(() =>
+      taskRepository.countCompletedSince(now - 7 * DAY_MS),
+    ).subscribe({
       next: setWeekCount,
       error: console.error,
     });
@@ -49,12 +59,16 @@ export function EmptyAllDone({ now, onCapture }: { now: number; onCapture: () =>
       </p>
       <div className="mt-6 flex items-center gap-5">
         <div className="text-center">
-          <div className="font-display text-2xl text-accent">{todayCount ?? "–"}</div>
+          <div className="font-display text-2xl text-accent">
+            {todayCount ?? "–"}
+          </div>
           <div className="font-body text-[13px] text-ink-faint">오늘 완료</div>
         </div>
         <div className="h-8 w-px bg-border" />
         <div className="text-center">
-          <div className="font-display text-2xl text-calm">{weekCount ?? "–"}</div>
+          <div className="font-display text-2xl text-calm">
+            {weekCount ?? "–"}
+          </div>
           <div className="font-body text-[13px] text-ink-faint">이번 주</div>
         </div>
       </div>
