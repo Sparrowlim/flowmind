@@ -21,7 +21,7 @@ export function Switch({
       }`}
     >
       <span
-        className={`absolute top-1 h-6 w-6 rounded-full bg-surface shadow-card transition-transform ${
+        className={`absolute top-1 left-0 h-6 w-6 rounded-full bg-white shadow-card transition-transform ${
           checked ? "translate-x-[30px]" : "translate-x-1"
         }`}
       />
