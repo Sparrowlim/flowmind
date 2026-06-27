@@ -1,3 +1,3 @@
 # flowmind
 
-flowmind-sage-kappa.vercel.app
+https://flowmind-sage-kappa.vercel.app
