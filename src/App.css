@@ -35,8 +35,8 @@
 }
 
 [data-theme="dark"] {
-  --color-bg: #0c0a08;
-  --color-surface: #201d19;
+  --color-bg: #201d19;
+  --color-surface: #2b2722;
   --color-border: #3a342c;
   --color-ink: #f0eadf;
   --color-ink-soft: #a89e8e;
