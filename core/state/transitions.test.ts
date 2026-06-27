@@ -81,6 +81,7 @@ describe("deferTask", () => {
       deferCount: 2,
       lastServedAt: NOW,
       dormantUntil: startOfNextUtcDay(NOW),
+      dormantReason: "snooze",
     });
   });
 });
@@ -93,6 +94,7 @@ describe("refuseSplit", () => {
       splitRefuseCount: 1,
       lastServedAt: NOW,
       dormantUntil: startOfNextUtcDay(NOW),
+      dormantReason: "snooze",
     });
   });
 
@@ -105,11 +107,12 @@ describe("refuseSplit", () => {
     expect(patch.deferCount).toBe(0);
     expect(patch.splitRefuseCount).toBe(0);
     expect(patch.dormantUntil).toBe(NOW + 7 * 24 * 60 * 60 * 1000);
+    expect(patch.dormantReason).toBe("cooldown");
   });
 });
 
 describe("acceptSplit", () => {
-  it("부모 회피 카운터 리셋 + 다음 체크인까지 보류 + 자식 1개 생성", () => {
+  it("부모 회피 카운터 리셋 + dormant 해제(차단은 자식 존재로 derive) + 자식 1개 생성", () => {
     const parent = makeTask({ deferCount: 3, splitRefuseCount: 1 });
     const { parentPatch, children } = acceptSplit(
       parent,
@@ -120,7 +123,8 @@ describe("acceptSplit", () => {
     expect(parentPatch).toEqual({
       deferCount: 0,
       splitRefuseCount: 0,
-      dormantUntil: startOfNextUtcDay(NOW),
+      dormantUntil: undefined,
+      dormantReason: undefined,
     });
     expect(children).toEqual([
       {
@@ -157,6 +161,7 @@ describe("manualArchive", () => {
   it("30일 후로 재우기", () => {
     expect(manualArchive(NOW)).toEqual({
       dormantUntil: NOW + 30 * 24 * 60 * 60 * 1000,
+      dormantReason: "archived",
     });
   });
 });

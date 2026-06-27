@@ -29,7 +29,9 @@ export const DEFAULT_SETTINGS: StoredSettings = {
   checkinTime: "09:00",
   theme: "light",
   onboarded: false,
-  oneAtATime: true,
+  // v1.6 - archive is now a core safety valve; default must not hide its entry point.
+  // "one at a time" stays available in Settings as an opt-in extreme-minimal mode.
+  oneAtATime: false,
   updatedAt: 0,
   schemaVersion: 1,
 };

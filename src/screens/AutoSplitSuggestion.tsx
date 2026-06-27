@@ -4,7 +4,11 @@
 import { useState } from "react";
 import type { Task, TaskId } from "@core/engine/types";
 import { Badge } from "../components/Badge";
-import { PrimaryButton, SecondaryButton, TextLinkButton } from "../components/Button";
+import {
+  PrimaryButton,
+  SecondaryButton,
+  TextLinkButton,
+} from "../components/Button";
 
 const MAX_STEPS = 3;
 
@@ -28,7 +32,7 @@ export function AutoSplitSuggestion({
   };
 
   return (
-    <div className="flex min-h-screen flex-col px-7 pt-7">
+    <div className="flex min-h-screen flex-col px-7 pt-16">
       <Badge variant="calm">세 번째 만난 일이에요</Badge>
       <h1 className="mt-5 font-display text-[28px] leading-snug text-ink">
         조금 버거운 일일 수 있어요.
@@ -46,8 +50,12 @@ export function AutoSplitSuggestion({
             key={i}
             autoFocus={i === 0}
             value={step}
-            onChange={(e) => setSteps(steps.map((s, j) => (j === i ? e.target.value : s)))}
-            placeholder={i === 0 ? "예: 병원 번호만 찾아두기" : "다음 작은 걸음 (선택)"}
+            onChange={(e) =>
+              setSteps(steps.map((s, j) => (j === i ? e.target.value : s)))
+            }
+            placeholder={
+              i === 0 ? "예: 병원 번호만 찾아두기" : "다음 작은 걸음 (선택)"
+            }
             className="rounded-lg border-[1.5px] border-accent bg-surface px-4 py-4 font-display text-lg text-ink outline-none"
           />
         ))}
@@ -60,16 +68,22 @@ export function AutoSplitSuggestion({
             ＋ 하나 더 (선택)
           </button>
         )}
-        <div className="font-body text-sm text-ink-faint">여기까지만 해도 충분해요</div>
+        <div className="font-body text-sm text-ink-faint">
+          여기까지만 해도 충분해요
+        </div>
       </div>
 
       <div className="flex-1" />
-      <div className="mb-10 flex flex-col gap-3">
+      <div className="mb-24 flex flex-col gap-3">
         <PrimaryButton disabled={!steps[0]?.trim()} onClick={submit}>
           좋아, 쪼개기
         </PrimaryButton>
-        <SecondaryButton onClick={() => onStartAnyway(task.id)}>아니, 그냥 시작할래</SecondaryButton>
-        <TextLinkButton onClick={() => onSkip(task.id)}>지금은 넘어갈래</TextLinkButton>
+        <SecondaryButton onClick={() => onStartAnyway(task.id)}>
+          아니, 그냥 시작할래
+        </SecondaryButton>
+        <TextLinkButton onClick={() => onSkip(task.id)}>
+          지금은 넘어갈래
+        </TextLinkButton>
       </div>
     </div>
   );

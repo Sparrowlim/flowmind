@@ -2,9 +2,11 @@
 
 export function Badge({
   variant = "accent",
+  className = "",
   children,
 }: {
   variant?: "accent" | "calm";
+  className?: string;
   children: React.ReactNode;
 }) {
   const bg = variant === "accent" ? "bg-accent-soft" : "bg-calm-soft";
@@ -13,7 +15,7 @@ export function Badge({
 
   return (
     <div
-      className={`inline-flex items-center gap-2 rounded-md px-3 py-2 ${bg}`}
+      className={`inline-flex items-center gap-2 rounded-md px-3 py-2 ${bg} ${className}`}
     >
       <span className={`h-[7px] w-[7px] rounded-full ${dot}`} />
       <span className={`font-body text-sm ${text}`}>{children}</span>

@@ -3,10 +3,17 @@
 export type TaskId = string; // UUID (E1: 자동증가 정수 금지)
 
 export type TaskState =
-  | 'active' // 풀에서 후보가 될 수 있음
-  | 'focus' // 집중 중(진행). focusPausedAt 유무로 일시정지 구분
-  | 'done'; // 완료. 후보 제외
+  | "active" // 풀에서 후보가 될 수 있음
+  | "focus" // 집중 중(진행). focusPausedAt 유무로 일시정지 구분
+  | "done"; // 완료. 후보 제외
 // 'dormant'는 상태가 아니라 dormantUntil 시각으로 표현(재우기 해제 = 시각 비교)
+
+// 보관함(06) 사유 배지용. 쪼개기 부모의 "자식 대기" 차단은 dormantUntil이 아니라
+// pickNextCard가 active 자식 존재로 derive하므로 여기 포함 안 함(저장값 아님).
+export type DormantReason =
+  | "snooze" // 이따 다시 / 자동쪼개기 넘어갈래(1회) — 다음 체크인까지
+  | "cooldown" // 자동쪼개기 넘어갈래 2회 — 7일 장기 재우기
+  | "archived"; // •••→보관함으로 보내기 — 30일
 
 export interface Task {
   // 식별
@@ -28,6 +35,7 @@ export interface Task {
   // 상태/스케줄
   state: TaskState;
   dormantUntil?: number; // epoch ms. 이 시각 전까지 후보 제외(재우기)
+  dormantReason?: DormantReason; // 보관함 표시용. dormantUntil 없으면 무의미
   focusPausedAt?: number; // 있으면 일시정지 상태(이어하기 대상)
   accumulatedSec?: number; // 누적 경과시간(일시정지 이어받기 — 엔진 선택엔 무관, UI용)
 }
@@ -42,18 +50,18 @@ export interface EngineConfig {
 }
 
 export type WhyNowRule =
-  | 'punctuality' // ① 오늘 마감 + 중요
-  | 'deadline-soon' // ③ 마감 ≤ 24h
-  | 'aging-promoted' // ③′ 나이 ≥ STALE_HARD (승격) — 같은 티어, 다른 카피
-  | 'quick-win' // ④ 예상 ≤ 2분
-  | 'stale' // ⑤ 나이 ≥ STALE_SOFT
-  | 'important' // ⑥ 중요 표시
-  | 'floor'; // 바닥 — 가장 오래된 것(불변식 ⒜)
+  | "punctuality" // ① 오늘 마감 + 중요
+  | "deadline-soon" // ③ 마감 ≤ 24h
+  | "aging-promoted" // ③′ 나이 ≥ STALE_HARD (승격) — 같은 티어, 다른 카피
+  | "quick-win" // ④ 예상 ≤ 2분
+  | "stale" // ⑤ 나이 ≥ STALE_SOFT
+  | "important" // ⑥ 중요 표시
+  | "floor"; // 바닥 — 가장 오래된 것(불변식 ⒜)
 
 export type Decision =
-  | { kind: 'empty-all-done' } // 풀 0개 → 🎉
-  | { kind: 'empty-dormant' } // 일은 있으나 전부 재우기 → 🌙
-  | { kind: 'resume'; task: Task } // 일시정지 이어하기
-  | { kind: 'new-greeting'; task: Task } // 신규 첫인사(담은 당일 1회)
-  | { kind: 'auto-split'; task: Task } // 규칙② 전용 화면 직행
-  | { kind: 'card'; task: Task; rule: WhyNowRule }; // 일반 지금 카드
+  | { kind: "empty-all-done" } // 풀 0개 → 🎉
+  | { kind: "empty-dormant" } // 일은 있으나 전부 재우기 → 🌙
+  | { kind: "resume"; task: Task } // 일시정지 이어하기
+  | { kind: "new-greeting"; task: Task } // 신규 첫인사(담은 당일 1회)
+  | { kind: "auto-split"; task: Task } // 규칙② 전용 화면 직행
+  | { kind: "card"; task: Task; rule: WhyNowRule }; // 일반 지금 카드

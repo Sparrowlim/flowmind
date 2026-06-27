@@ -48,11 +48,13 @@ function App() {
     completeFocus,
     deferTask,
     refuseSplit,
+    acceptSplit,
     acceptSplitAndStart,
     editTitle,
     manualArchive,
     softDelete,
     wakeNow,
+    wakeAndStart,
   } = useTasks();
   const {
     settings,
@@ -75,6 +77,14 @@ function App() {
       t.dormantUntil !== undefined &&
       t.dormantUntil > now,
   );
+  // 쪼개기 부모(자식 완료까지 차단, core/engine/pickNextCard와 동일 조건) — 보관함에서 진행도로 보여줄 대상.
+  const splittingParents = tasks
+    .filter((t) => t.state !== "done" && !t.parentId)
+    .map((parent) => ({
+      parent,
+      children: tasks.filter((c) => c.parentId === parent.id),
+    }))
+    .filter(({ children }) => children.some((c) => c.state !== "done"));
 
   const theme = settings?.theme;
   useEffect(() => {
@@ -126,6 +136,23 @@ function App() {
   const handleSplitSubmit = async (parentId: TaskId, stepTitles: string[]) => {
     const childId = await acceptSplitAndStart(parentId, stepTitles);
     if (childId) setView({ kind: "focus", taskId: childId });
+  };
+
+  // 쪼개기 "만들어두고 나중에" — 자식만 생성, 즉시 시작은 사용자 선택이 아니므로 강제하지 않음.
+  const handleSplitLater = async (parentId: TaskId, stepTitles: string[]) => {
+    await acceptSplit(parentId, stepTitles);
+    setView({ kind: "engine" });
+  };
+
+  const handleWakeAndStart = async (id: TaskId) => {
+    await wakeAndStart(id);
+    setArchiveOpen(false);
+    setView({ kind: "focus", taskId: id });
+  };
+
+  const handleWakeToEngine = async (id: TaskId) => {
+    await wakeNow(id);
+    setArchiveOpen(false);
   };
 
   const handlePause = async (id: TaskId, sessionElapsedSec: number) => {
@@ -208,7 +235,12 @@ function App() {
         (() => {
           const task = tasks.find((t) => t.id === view.taskId);
           return task ? (
-            <SplitFirstStep task={task} onSubmit={handleSplitSubmit} />
+            <SplitFirstStep
+              task={task}
+              onCancel={() => setView({ kind: "engine" })}
+              onStartNow={handleSplitSubmit}
+              onSaveForLater={handleSplitLater}
+            />
           ) : null;
         })()}
       {view.kind === "focus" &&
@@ -262,9 +294,12 @@ function App() {
       )}
       {archiveOpen && (
         <Archive
-          tasks={dormantTasks}
+          dormantTasks={dormantTasks}
+          splittingParents={splittingParents}
           now={now}
           onClose={() => setArchiveOpen(false)}
+          onWakeAndStart={handleWakeAndStart}
+          onWakeToEngine={handleWakeToEngine}
         />
       )}
       {settingsOpen && (
@@ -279,7 +314,6 @@ function App() {
           task={taskMenuTask}
           onClose={() => setTaskMenuTaskId(null)}
           onEditTitle={editTitle}
-          onDefer={deferTask}
           onArchive={manualArchive}
           onDelete={softDelete}
         />

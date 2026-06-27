@@ -47,11 +47,15 @@ export function completeFocus(
 export function deferTask(
   task: Task,
   now: number,
-): Pick<Task, "deferCount" | "lastServedAt" | "dormantUntil"> {
+): Pick<
+  Task,
+  "deferCount" | "lastServedAt" | "dormantUntil" | "dormantReason"
+> {
   return {
     deferCount: task.deferCount + 1,
     lastServedAt: now,
     dormantUntil: startOfNextUtcDay(now),
+    dormantReason: "snooze",
   };
 }
 
@@ -62,7 +66,11 @@ export function refuseSplit(
   cfg: EngineConfig,
 ): Pick<
   Task,
-  "deferCount" | "splitRefuseCount" | "lastServedAt" | "dormantUntil"
+  | "deferCount"
+  | "splitRefuseCount"
+  | "lastServedAt"
+  | "dormantUntil"
+  | "dormantReason"
 > {
   const nextRefuseCount = task.splitRefuseCount + 1;
   if (nextRefuseCount >= cfg.splitRefuseMax) {
@@ -71,6 +79,7 @@ export function refuseSplit(
       splitRefuseCount: 0,
       lastServedAt: now,
       dormantUntil: now + LONG_DORMANT_MS,
+      dormantReason: "cooldown",
     };
   }
   return {
@@ -78,26 +87,32 @@ export function refuseSplit(
     splitRefuseCount: nextRefuseCount,
     lastServedAt: now,
     dormantUntil: startOfNextUtcDay(now),
+    dormantReason: "snooze",
   };
 }
 
-// 쪼개기 수락 = 의미 있는 관여 → 부모의 회피 카운터 리셋(plan §2.4) + 다음 체크인까지 보류
-// (와이어프레임 04: "부모는 사라지지 않고 진행중 보관"). 평평한 리스트로 1~3개 스텝.
-// 첫 스텝은 호출부가 즉시 startFocus, 나머지는 풀에 그대로 추가(확인 화면 없음).
+// 쪼개기 수락 = 의미 있는 관여 → 부모의 회피 카운터 리셋(plan §2.4).
+// 부모는 dormantUntil로 재우는 게 아니라, active 자식이 남아있는 동안 pickNextCard가
+// 후보에서 자동 제외한다(engine-flow.md ③). 자식 전부 완료되면 별도 동작 없이 다시 후보가 됨.
+// 평평한 리스트로 1~3개 스텝. 첫 스텝은 호출부가 즉시 startFocus, 나머지는 풀에 그대로 추가(확인 화면 없음).
 export function acceptSplit(
   parent: Task,
   stepTitles: string[],
   childIds: TaskId[],
   now: number,
 ): {
-  parentPatch: Pick<Task, "deferCount" | "splitRefuseCount" | "dormantUntil">;
+  parentPatch: Pick<
+    Task,
+    "deferCount" | "splitRefuseCount" | "dormantUntil" | "dormantReason"
+  >;
   children: Task[];
 } {
   return {
     parentPatch: {
       deferCount: 0,
       splitRefuseCount: 0,
-      dormantUntil: startOfNextUtcDay(now),
+      dormantUntil: undefined,
+      dormantReason: undefined,
     },
     children: stepTitles.map((title, i) => ({
       id: childIds[i]!,
@@ -112,8 +127,10 @@ export function acceptSplit(
   };
 }
 
-export function manualArchive(now: number): Pick<Task, "dormantUntil"> {
-  return { dormantUntil: now + ARCHIVE_DORMANT_MS };
+export function manualArchive(
+  now: number,
+): Pick<Task, "dormantUntil" | "dormantReason"> {
+  return { dormantUntil: now + ARCHIVE_DORMANT_MS, dormantReason: "archived" };
 }
 
 export function editTitle(title: string): Pick<Task, "title"> {

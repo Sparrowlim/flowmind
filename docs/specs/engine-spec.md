@@ -125,10 +125,12 @@ function pickNextCard(pool: Task[], now: number, cfg: EngineConfig): Decision;
 engine-flow ① + plan §4.5를 순서대로. **위에서 첫 매칭에 즉시 반환.**
 
 ```
-0. candidates = pool 중 (state ≠ 'done') AND (dormantUntil 없음 OR dormantUntil ≤ now)
+0. candidates = pool 중 (state ≠ 'done')
+              AND (dormantUntil 없음 OR dormantUntil ≤ now)
+              AND NOT (쪼개기 부모이며 active(non-done) 자식이 하나라도 있음)  -- v1.6, derive, 저장값 아님
    - candidates 비었으면:
        pool에 'done' 아닌 일이 0개  → empty-all-done
-       있으나 전부 dormant         → empty-dormant
+       있으나 전부 dormant/차단     → empty-dormant
 
 1. [GATE-RESUME] candidates 중 focusPausedAt 있는 일 → resume   (※ T-O1, §6 참조)
 2. [GATE-GREETING] candidates 중 신규 첫인사 대상 → new-greeting
