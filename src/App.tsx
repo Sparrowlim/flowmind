@@ -213,8 +213,16 @@ function App() {
   const checkinNeeded = needsCheckin(settings, now);
   const todaySkipped = isDismissedToday(settings, now);
   const gated = checkinNeeded || todaySkipped;
+  // 체크인 또는 "그래도 지금 볼래요" 오버라이드 — 어느 쪽이든 오늘의 dismiss 상태를 푼다.
   const checkedInToday = () =>
-    updateSettings({ lastCheckinDate: todayUtcDateString(Date.now()) });
+    updateSettings({
+      lastCheckinDate: todayUtcDateString(Date.now()),
+      dismissedToday: undefined,
+    });
+  // "오늘 그만" — 완료 직후에도 누를 수 있어 lastCheckinDate는 이미 오늘일 수 있다.
+  // dismissedToday만 오늘로 찍어 CheckInSkipped로 게이트한다(checkin.ts 참고).
+  const stopForToday = () =>
+    updateSettings({ dismissedToday: todayUtcDateString(Date.now()) });
   // 캡처는 "지금 카드/빈 상태/체크인 게이트"에서 항상 닿아야 한다(빠른 캡처가 MVP 심장 — 체크인이
   // 막아선 안 됨). 집중 중·쪼개기 제안 중·일시정지 중에만 숨겨 몰입과 회피 개입을 보호한다.
   const captureVisible =
@@ -263,7 +271,10 @@ function App() {
         <CompletedInterstitial
           nextTask={completedNext}
           onContinue={() => setView({ kind: "engine" })}
-          onStop={() => setView({ kind: "engine" })}
+          onStop={async () => {
+            await stopForToday();
+            setView({ kind: "engine" });
+          }}
         />
       )}
       {view.kind === "engine" && !gated && (

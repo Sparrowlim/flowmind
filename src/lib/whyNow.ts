@@ -1,4 +1,5 @@
-// Phase 2 — plan.md §2.3 "왜 지금?" 접힌 카피(규칙별 한 줄). 펼친 카피는 Phase 3+에서.
+// Phase 2 — plan.md §2.3 "왜 지금?" 접힌 카피(규칙별 한 줄). 펼친 상세(마감·예상시간·중요)는
+// NowCard의 "자세히 보기" 토글에서 task 필드를 직접 보여준다.
 
 import { ageDays } from "@core/engine/age";
 import type { Task, WhyNowRule } from "@core/engine/types";

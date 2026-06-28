@@ -1,4 +1,5 @@
-// Phase 2 — 화면 05A(완료 직후). "오늘 그만"의 본격 동작(체크인 게이트 등)은 Phase 4에서.
+// Phase 2 — 화면 05A(완료 직후). "오늘 그만"은 App.tsx의 stopForToday가 dismissedToday를
+// 찍어 체크인 게이트(CheckInSkipped)로 보낸다(checkin.ts 참고).
 
 import type { Task } from "@core/engine/types";
 import { Card } from "../components/Card";
