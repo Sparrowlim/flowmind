@@ -215,6 +215,11 @@ function App() {
   const gated = checkinNeeded || todaySkipped;
   const checkedInToday = () =>
     updateSettings({ lastCheckinDate: todayUtcDateString(Date.now()) });
+  // 캡처는 "지금 카드/빈 상태/체크인 게이트"에서 항상 닿아야 한다(빠른 캡처가 MVP 심장 — 체크인이
+  // 막아선 안 됨). 집중 중·쪼개기 제안 중·일시정지 중에만 숨겨 몰입과 회피 개입을 보호한다.
+  const captureVisible =
+    view.kind === "engine" &&
+    (gated || (decision.kind !== "auto-split" && decision.kind !== "resume"));
 
   return (
     <div className="relative mx-auto min-h-screen max-w-[480px] bg-bg">
@@ -262,32 +267,35 @@ function App() {
         />
       )}
       {view.kind === "engine" && !gated && (
-        <>
-          {/* 둘 다 top-left에 모음 — top-right는 NowCard 자체의 "···" 메뉴 자리라 비워둠(겹침 방지). */}
-          <div className="fixed top-6 left-6 z-40 flex items-center gap-3 font-body text-sm text-ink-faint">
-            {!settings.oneAtATime && (
-              <button type="button" onClick={() => setArchiveOpen(true)}>
-                보관함
-                {dormantTasks.length > 0 ? ` (${dormantTasks.length})` : ""}
-              </button>
-            )}
-            <button
-              type="button"
-              aria-label="설정"
-              onClick={() => setSettingsOpen(true)}
-            >
-              설정
+        // top-right는 NowCard 자체의 "···" 메뉴 자리라 비워둠(겹침 방지).
+        <div className="fixed top-6 left-6 z-40 flex items-center gap-3 font-body text-sm text-ink-faint">
+          {!settings.oneAtATime && (
+            <button type="button" onClick={() => setArchiveOpen(true)}>
+              보관함
+              {dormantTasks.length > 0 ? ` (${dormantTasks.length})` : ""}
             </button>
-          </div>
+          )}
           <button
             type="button"
-            onClick={() => setCaptureOpen(true)}
-            aria-label="할 일 담기"
-            className="fixed right-6 bottom-8 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-accent font-display text-2xl text-white shadow-accent"
+            aria-label="설정"
+            onClick={() => setSettingsOpen(true)}
           >
-            +
+            설정
           </button>
-        </>
+        </div>
+      )}
+      {captureVisible && (
+        <button
+          type="button"
+          onClick={() => setCaptureOpen(true)}
+          aria-label="할 일 담기"
+          className="fixed right-6 bottom-8 z-40 flex items-center gap-2 rounded-full border border-accent-soft bg-surface px-5 py-3 font-body text-base font-bold text-accent-text shadow-card"
+        >
+          <span aria-hidden className="font-display text-lg leading-none">
+            ＋
+          </span>
+          담아두기
+        </button>
       )}
       {captureOpen && (
         <Capture onClose={() => setCaptureOpen(false)} onSubmit={capture} />
