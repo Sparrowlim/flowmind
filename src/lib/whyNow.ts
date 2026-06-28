@@ -18,6 +18,6 @@ export function whyNowLabel(rule: WhyNowRule, task: Task, now: number): string {
     case "important":
       return "중요 표시한 일";
     case "floor":
-      return "지금 이거예요";
+      return "가장 오래 기다린 일";
   }
 }

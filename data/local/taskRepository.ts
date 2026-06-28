@@ -17,6 +17,7 @@ function toTask(stored: StoredTask): Task {
     splitRefuseCount,
     state,
     dormantUntil,
+    dormantReason,
     focusPausedAt,
     accumulatedSec,
   } = stored;
@@ -33,6 +34,7 @@ function toTask(stored: StoredTask): Task {
     splitRefuseCount,
     state,
     dormantUntil,
+    dormantReason,
     focusPausedAt,
     accumulatedSec,
   };

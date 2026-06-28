@@ -1,30 +1,39 @@
-// 화면 04(쪼갤래요). 와이어프레임: 평평한 리스트로 1~3개 스텝, 첫 스텝만 즉시 집중 시작,
-// 나머지는 확인 화면 없이 풀에 추가. 부모는 다음 체크인까지 보류(core/state acceptSplit).
+// 화면 04(쪼갤래요). 와이어프레임: 평평한 리스트로 1~3개 스텝, 풀에 추가(확인 화면 없음).
+// 첫 스텝을 바로 시작할지/나중으로 미룰지는 사용자 선택(주도권 원칙) — 부모는 active 자식이
+// 남는 동안 엔진이 자동 차단(core/state acceptSplit + core/engine/pickNextCard).
+// "← 그만두기"는 아무것도 만들지 않고 지금 카드로 복귀(되돌릴 수 있는 진입).
 
 import { useState } from "react";
 import type { Task, TaskId } from "@core/engine/types";
-import { PrimaryButton } from "../components/Button";
+import { PrimaryButton, SecondaryButton } from "../components/Button";
 
 const MAX_STEPS = 3;
 
 export function SplitFirstStep({
   task,
-  onSubmit,
+  onCancel,
+  onStartNow,
+  onSaveForLater,
 }: {
   task: Task;
-  onSubmit: (parentId: TaskId, stepTitles: string[]) => void;
+  onCancel: () => void;
+  onStartNow: (parentId: TaskId, stepTitles: string[]) => void;
+  onSaveForLater: (parentId: TaskId, stepTitles: string[]) => void;
 }) {
   const [steps, setSteps] = useState<string[]>([""]);
 
-  const submit = () => {
-    const titles = steps.map((s) => s.trim()).filter(Boolean);
-    if (titles.length === 0) return;
-    onSubmit(task.id, titles);
-  };
+  const titles = () => steps.map((s) => s.trim()).filter(Boolean);
 
   return (
     <div className="flex min-h-screen flex-col px-7 pt-7">
-      <h1 className="font-display text-[30px] leading-snug text-ink">
+      <button
+        type="button"
+        onClick={onCancel}
+        className="self-start font-body text-base text-ink-soft"
+      >
+        ← 그만두기
+      </button>
+      <h1 className="mt-4 font-display text-[30px] leading-snug text-ink">
         어디서부터
         <br />
         시작할까요?
@@ -43,9 +52,17 @@ export function SplitFirstStep({
             key={i}
             autoFocus={i === 0}
             value={step}
-            onChange={(e) => setSteps(steps.map((s, j) => (j === i ? e.target.value : s)))}
-            onKeyDown={(e) => e.key === "Enter" && submit()}
-            placeholder={i === 0 ? "예: 자료 폴더 하나만 열기" : "다음 작은 걸음 (선택)"}
+            onChange={(e) =>
+              setSteps(steps.map((s, j) => (j === i ? e.target.value : s)))
+            }
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && titles().length > 0) {
+                onStartNow(task.id, titles());
+              }
+            }}
+            placeholder={
+              i === 0 ? "예: 자료 폴더 하나만 열기" : "다음 작은 걸음 (선택)"
+            }
             className="rounded-lg border-[1.5px] border-accent bg-surface px-4 py-4 font-display text-lg text-ink outline-none"
           />
         ))}
@@ -64,9 +81,20 @@ export function SplitFirstStep({
       </div>
 
       <div className="flex-1" />
-      <PrimaryButton className="mb-3" disabled={!steps[0]?.trim()} onClick={submit}>
-        이 걸음부터
+      <PrimaryButton
+        className="mb-3"
+        disabled={!steps[0]?.trim()}
+        onClick={() => onStartNow(task.id, titles())}
+      >
+        이 걸음부터 시작
       </PrimaryButton>
+      <SecondaryButton
+        className="mb-3"
+        disabled={!steps[0]?.trim()}
+        onClick={() => onSaveForLater(task.id, titles())}
+      >
+        만들어두고 나중에
+      </SecondaryButton>
       <p className="mb-10 text-center font-body text-[13px] text-ink-faint">
         쪼개기 카드엔 '쪼갤래요'가 없어요
       </p>

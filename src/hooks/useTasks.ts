@@ -80,13 +80,10 @@ export function useTasks() {
     );
   };
 
-  // 쪼개기 수락(02-1·04 공용) — 부모 회피카운터 리셋 + 자식 생성 + 자식 바로 집중 시작.
-  // 부모 회피카운터 리셋 + 다음 체크인까지 보류 + 1~3개 자식 생성, 첫 자식만 바로
-  // 집중 시작(나머지는 풀에 추가, 확인 화면 없음 — 와이어프레임 04).
-  const acceptSplitAndStart = async (
-    parentId: TaskId,
-    stepTitles: string[],
-  ) => {
+  // 쪼개기 수락(02-1·04 공용) — 부모 회피카운터 리셋 + 1~3개 자식 생성(풀에 추가).
+  // 부모는 active 자식이 남아있는 동안 엔진이 자동으로 후보 제외(core/engine/pickNextCard).
+  // 첫 자식 즉시 시작 여부는 호출부 선택(쪼개기 화면의 "시작"/"나중에" 두 갈래, plan §2.4 주도권 원칙).
+  const acceptSplit = async (parentId: TaskId, stepTitles: string[]) => {
     const parent = await taskRepository.get(parentId);
     if (!parent || stepTitles.length === 0) return undefined;
     const now = Date.now();
@@ -99,8 +96,20 @@ export function useTasks() {
     );
     await taskRepository.update(parentId, parentPatch, now);
     for (const child of children) await taskRepository.insert(child, now);
-    const firstChildId = childIds[0]!;
-    await taskRepository.update(firstChildId, transitions.startFocus(now), now);
+    return childIds[0]!;
+  };
+
+  const acceptSplitAndStart = async (
+    parentId: TaskId,
+    stepTitles: string[],
+  ) => {
+    const firstChildId = await acceptSplit(parentId, stepTitles);
+    if (!firstChildId) return undefined;
+    await taskRepository.update(
+      firstChildId,
+      transitions.startFocus(Date.now()),
+      Date.now(),
+    );
     return firstChildId;
   };
 
@@ -119,7 +128,18 @@ export function useTasks() {
 
   // 보관함 "그래도 하나 볼래요" / 비움 "그래도 하나 볼래요" — 재우기를 즉시 해제.
   const wakeNow = async (id: TaskId) => {
-    await taskRepository.update(id, { dormantUntil: Date.now() }, Date.now());
+    const now = Date.now();
+    await taskRepository.update(
+      id,
+      { dormantUntil: now, dormantReason: undefined },
+      now,
+    );
+  };
+
+  // 보관함 "지금 이거 할래" — 깨우기 + 즉시 집중 시작을 한 동작으로(싼 되돌리기 원칙).
+  const wakeAndStart = async (id: TaskId) => {
+    await wakeNow(id);
+    await startFocus(id);
   };
 
   return {
@@ -133,10 +153,12 @@ export function useTasks() {
     completeFocus,
     deferTask,
     refuseSplit,
+    acceptSplit,
     acceptSplitAndStart,
     editTitle,
     manualArchive,
     softDelete,
     wakeNow,
+    wakeAndStart,
   };
 }

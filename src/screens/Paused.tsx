@@ -23,7 +23,7 @@ export function Paused({
   const totalSec = task.accumulatedSec ?? 0;
 
   return (
-    <div className="flex min-h-screen flex-col items-center px-8 pt-8">
+    <div className="flex min-h-screen flex-col items-center px-8 pt-16">
       <div className="inline-flex items-center gap-2 rounded-md border border-dashed border-ink-faint px-3 py-1 font-body text-sm text-ink-faint">
         ⏸ 멈춤
       </div>
@@ -38,7 +38,7 @@ export function Paused({
           여기서부터 이어서 할 수 있어요
         </div>
       </div>
-      <PrimaryButton className="mb-10" onClick={() => onResume(task.id)}>
+      <PrimaryButton className="mb-24" onClick={() => onResume(task.id)}>
         ▶ 이어서 하기
       </PrimaryButton>
     </div>

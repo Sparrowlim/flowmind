@@ -9,14 +9,12 @@ export function TaskActionMenu({
   task,
   onClose,
   onEditTitle,
-  onDefer,
   onArchive,
   onDelete,
 }: {
   task: Task;
   onClose: () => void;
   onEditTitle: (id: TaskId, title: string) => void;
-  onDefer: (id: TaskId) => void;
   onArchive: (id: TaskId) => void;
   onDelete: (id: TaskId) => void;
 }) {
@@ -61,16 +59,6 @@ export function TaskActionMenu({
           onClick={() => setEditing(true)}
         >
           제목 수정하기
-        </button>
-        <button
-          type="button"
-          className="py-4 text-center font-body text-lg text-ink"
-          onClick={() => {
-            onDefer(task.id);
-            onClose();
-          }}
-        >
-          나중으로 미루기
         </button>
         <button
           type="button"

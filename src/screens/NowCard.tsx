@@ -29,7 +29,7 @@ export function NowCard({
       : whyNowLabel(decision.rule, task, now);
 
   return (
-    <div className="flex min-h-screen flex-col px-7 pt-7">
+    <div className="flex min-h-screen flex-col px-7 pt-16">
       <div className="flex items-center justify-between">
         <span className="font-body text-[15px] tracking-wide text-ink-faint">
           지금 할 일
@@ -49,7 +49,7 @@ export function NowCard({
         </h1>
         <Badge variant="accent">왜 지금? · {label}</Badge>
       </div>
-      <div className="flex flex-col gap-3 pb-10">
+      <div className="flex flex-col gap-3 pb-24">
         <PrimaryButton onClick={() => onStart(task.id)}>
           지금 시작
         </PrimaryButton>
