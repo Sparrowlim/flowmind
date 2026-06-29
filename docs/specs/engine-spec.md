@@ -1,6 +1,7 @@
 # 엔진 구현 스펙: core/engine (빌드 1단계)
 
-> 상태: FINAL v1.0 — 구현 스펙 확정. 코드의 타입 시그니처 + 골든 테스트 입력 명세. (구현 미착수)
+> 상태: FINAL v1.0 — 구현 스펙 확정. 코드의 타입 시그니처 + 골든 테스트 입력 명세.
+> **구현 현황(2026-06-28 갱신)**: §1·§2 타입, §3 절차, §4 타이브레이크는 `core/engine/*.ts`로 구현 완료(아래 §8 실제 파일 목록 참조). §7 골든 케이스(G-01~G-86)는 **아직 전용 테스트 파일로 옮겨지지 않음** — `core/engine/pickNextCard.test.ts`에는 쪼개기 부모 차단 시나리오 3건만 있고 명세의 골든 매트릭스 전체는 미작성(T-O3, docs/plan.md Part 0 참조).
 > 확정이력:
 > - v1.0 — 타입(§1·§2)·절차(§3)·타이브레이크(§4)·불변식(§5)·골든 케이스(§7) 잠금. 미명시 빈칸 3건 확정(§6 S1·S2·S3). 잔여: T-O1만 PENDING(도그푸딩에서 확정, G-30).
 > 출처: plan.md §4·§4.5 / ADR-0001 (D7~D14) / ADR-0002 (§3 순수코어, §4 데이터모델, §6-1 빌드순서) / engine-flow.md ①②③
@@ -57,9 +58,17 @@ interface Task {
   // 상태/스케줄
   state: TaskState;
   dormantUntil?: number;         // epoch ms. 이 시각 전까지 후보 제외(재우기)
+  dormantReason?: DormantReason; // (v1.6 추가) 보관함 사유 배지용. 엔진 선택엔 무관, UI용
   focusPausedAt?: number;        // 있으면 일시정지 상태(이어하기 대상)
   accumulatedSec?: number;       // 누적 경과시간(일시정지 이어받기 — 엔진 선택엔 무관, UI용)
 }
+
+// (v1.6 추가) 보관함(06) 사유 배지용. 쪼개기 부모의 "자식 대기" 차단은 dormantUntil이
+// 아니라 pickNextCard가 active 자식 존재로 derive하므로 여기 포함 안 함(저장값 아님).
+type DormantReason =
+  | 'snooze'    // 이따 다시 / 자동쪼개기 넘어갈래(1회) — 다음 체크인까지
+  | 'cooldown'  // 자동쪼개기 넘어갈래 2회 — 7일 장기 재우기
+  | 'archived'; // •••→보관함으로 보내기 — 30일
 ```
 
 > **엔진이 읽지 않는 필드**(완결성 위해 명시): `completedAt`, `updatedAt`, `deletedAt`, `schemaVersion`. 이들은 data/ui 계층 책임 → 엔진 타입에서 제외해 코어를 좁게 유지.
@@ -301,13 +310,15 @@ plan/다이어그램에 명시 없거나 충돌하던 3건을 v1.0에서 확정.
 ```
 core/
   engine/
-    types.ts          // §1·§2 타입 (Task, EngineConfig, Decision, WhyNowRule)
-    config.ts         // DEFAULT_CONFIG
-    age.ts            // ageMs, ageDays (순수)
-    classify.ts       // 단일 task → 티어/rule (§3.3)
-    tiebreak.ts       // compareWithinTier (§4)
-    pickNextCard.ts   // §3 절차 조립
-    pickNextCard.golden.test.ts  // §7 G-01~G-86 (G-30 skip+TODO)
+    types.ts          // §1·§2 타입 (Task, EngineConfig, Decision, WhyNowRule, DormantReason) — 구현 완료
+    config.ts         // DEFAULT_CONFIG — 구현 완료
+    age.ts            // ageMs, ageDays, isSameCalendarDay, startOfNextUtcDay (순수) — 구현 완료
+    classify.ts       // 단일 task → 티어/rule (§3.3) — 구현 완료
+    tiebreak.ts       // compareWithinTier/compareForSplitGate/compareForResumeGate (§4) — 구현 완료
+    pickNextCard.ts   // §3 절차 조립 — 구현 완료
+    pickNextCard.test.ts  // 쪼개기 부모 차단 시나리오 3건만 존재.
+                           // §7 G-01~G-86 골든 매트릭스는 아직 옮겨지지 않음 — T-O3 (PENDING)
 ```
 
-> 다음 단계: 이 스펙 합의 → 위 파일 골격 + 타입부터 구현(코드 (A) 단계 진입). 합의 전엔 코드 없음.
+> `core/state/transitions.ts`(시작·일시정지·완료·미룸·자동쪼개기 거부·쪼개기 수락·보관·제목수정)도
+> 이 스펙과 같은 격리 원칙(순수·`now` 주입·무IO)으로 구현되어 있다 — engine-flow.md ②③ 참조.
